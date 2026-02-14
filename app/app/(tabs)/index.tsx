@@ -3,10 +3,12 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useRouter } from 'expo-router';
 import { useTheme, radii } from '../../src/theme';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
 import { FORGEButton } from '../../src/components/FORGEButton';
 import { EmptyState } from '../../src/components/EmptyState';
+import { MiniBuddy } from '../../src/components/MiniBuddy';
 
 const HAS_CASES = false;
 
@@ -21,7 +23,7 @@ function StatCard({ label, value, color, bgColor }: { label: string; value: stri
   const { typography, colors } = useTheme();
   return (
     <View style={[styles.statCard, { backgroundColor: bgColor }]}>
-      <Text style={[{ fontFamily: typography.display.fontFamily, fontSize: 28, color }]}>{value}</Text>
+      <Text style={{ fontFamily: typography.display.fontFamily, fontSize: 28, color }}>{value}</Text>
       <Text style={[typography.caption, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
@@ -29,20 +31,22 @@ function StatCard({ label, value, color, bgColor }: { label: string; value: stri
 
 export default function HomeScreen() {
   const { colors, typography } = useTheme();
+  const router = useRouter();
 
   if (!HAS_CASES) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.header}>
-          <Text style={[typography.h1, { color: colors.text }]}>PriorAuth Buddy</Text>
-          <Text style={[typography.body, { color: colors.textSecondary }]}>{getGreeting()} 👋</Text>
-        </View>
+        <Animated.View entering={FadeInDown.delay(50).springify()} style={styles.centeredHeader}>
+          <MiniBuddy mood="happy" size={32} />
+          <Text style={[typography.h1, { color: colors.text, textAlign: 'center' }]}>PriorAuth Buddy</Text>
+          <Text style={[typography.body, { color: colors.textSecondary, textAlign: 'center' }]}>{getGreeting()} 👋</Text>
+        </Animated.View>
         <EmptyState
           mood="sleeping"
           title="Nothing here yet"
           subtitle="Tap + to add your first case and start fighting back"
           actionLabel="Add Your First Case"
-          onAction={() => {}}
+          onAction={() => router.push('/(tabs)/cases')}
         />
       </SafeAreaView>
     );
@@ -51,9 +55,10 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={[typography.h1, { color: colors.text }]}>PriorAuth Buddy</Text>
-          <Text style={[typography.body, { color: colors.textSecondary }]}>{getGreeting()} 👋</Text>
+        <View style={styles.centeredHeader}>
+          <MiniBuddy mood="happy" size={32} />
+          <Text style={[typography.h1, { color: colors.text, textAlign: 'center' }]}>PriorAuth Buddy</Text>
+          <Text style={[typography.body, { color: colors.textSecondary, textAlign: 'center' }]}>{getGreeting()} 👋</Text>
         </View>
 
         <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.buddySection}>
@@ -79,9 +84,9 @@ export default function HomeScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.actions}>
-          <FORGEButton title="Add Case" onPress={() => {}} />
-          <FORGEButton title="Call Insurance" onPress={() => {}} variant="secondary" />
-          <FORGEButton title="Write Appeal" onPress={() => {}} variant="secondary" />
+          <FORGEButton title="Add Case" onPress={() => router.push('/(tabs)/cases')} />
+          <FORGEButton title="Call Insurance" onPress={() => router.push('/(tabs)/scripts')} variant="secondary" />
+          <FORGEButton title="Write Appeal" onPress={() => router.push('/(tabs)/appeals')} variant="secondary" />
         </Animated.View>
       </ScrollView>
     </SafeAreaView>
@@ -91,6 +96,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 100 },
+  centeredHeader: { alignItems: 'center', paddingTop: 16, paddingBottom: 12, gap: 4 },
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, gap: 4 },
   buddySection: { alignItems: 'center', paddingVertical: 20, gap: 8 },
   scoreContainer: { alignItems: 'center' },

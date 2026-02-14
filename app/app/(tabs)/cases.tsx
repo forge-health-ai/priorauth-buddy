@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { useTheme, radii, springs } from '../../src/theme';
 import { CaseCard } from '../../src/components/CaseCard';
 import { EmptyState } from '../../src/components/EmptyState';
+import { MiniBuddy } from '../../src/components/MiniBuddy';
 
 function FAB({ onPress }: { onPress: () => void }) {
   const { colors } = useTheme();
@@ -28,29 +29,40 @@ function FAB({ onPress }: { onPress: () => void }) {
   );
 }
 
+function addCase() {
+  Alert.alert(
+    'Coming Soon',
+    'Case tracking will be available in the next update. You\'ll be able to track prior authorizations, deadlines and outcomes.',
+    [{ text: 'Got it' }]
+  );
+}
+
 export default function CasesScreen() {
   const { colors, typography } = useTheme();
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
+        <View style={styles.titleRow}>
+          <MiniBuddy mood="thinking" size={24} />
+          <Text style={[typography.caption, { color: colors.textSecondary }]}>PriorAuth Buddy</Text>
+        </View>
         <Text style={[typography.h1, { color: colors.text }]}>Cases</Text>
       </View>
       <EmptyState
         mood="confused"
         title="No cases yet"
-        subtitle="Track your prior authorizations and never miss a deadline"
-        actionLabel="Add First Case"
-        onAction={() => {}}
+        subtitle="Track your prior authorizations and never miss a deadline. Tap + to get started."
       />
-      <FAB onPress={() => {}} />
+      <FAB onPress={addCase} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, gap: 4 },
+  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8, gap: 2 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   fab: { position: 'absolute', bottom: 100, right: 20 },
   fabGradient: {
     width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center',

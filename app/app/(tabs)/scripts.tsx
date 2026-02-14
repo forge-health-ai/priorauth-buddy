@@ -5,10 +5,12 @@ import Animated, { FadeInDown, useSharedValue, withSpring } from 'react-native-r
 import * as Haptics from 'expo-haptics';
 import { useTheme, radii, springs } from '../../src/theme';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
+import { MiniBuddy } from '../../src/components/MiniBuddy';
+import type { BuddyMood } from '../../src/components/BuddyMascot';
 
-const SCRIPTS = [
+const SCRIPTS: Array<{ id: string; scenario: string; buddyMood: BuddyMood; intro: string; phrases: string[]; rebuttals: Record<string, string>; tips: string[] }> = [
   {
-    id: '1', scenario: 'Initial Status Check', emoji: '📞',
+    id: '1', scenario: 'Initial Status Check', buddyMood: 'thinking',
     intro: "Hi, I'm calling to check the status of a prior authorization request. My reference number is [NUMBER].",
     phrases: ['Can you tell me the current status?', 'When was this request received?', 'What is the expected decision date?', 'Is there any missing information I should provide?'],
     rebuttals: {
@@ -19,7 +21,7 @@ const SCRIPTS = [
     tips: ["Always get the representative's name and ID", 'Write down the date and time of your call', "Ask for a reference number if you don't have one"],
   },
   {
-    id: '2', scenario: 'Deadline Approaching (Day 10+)', emoji: '⏰',
+    id: '2', scenario: 'Deadline Approaching (Day 10+)', buddyMood: 'angry' as BuddyMood,
     intro: "Hi, I'm calling about an urgent prior authorization. It's been [X] days and I haven't received a decision.",
     phrases: ['This request was submitted on [DATE], which is [X] days ago', 'Federal regulations require a decision within [14/30] days', "I need to understand why there's been a delay", 'Can this be escalated for immediate review?'],
     rebuttals: {
@@ -30,7 +32,7 @@ const SCRIPTS = [
     tips: ['Be firm but polite - you have rights', 'Mention regulatory timelines (14 days standard, 72 hours urgent)', 'Ask to escalate if past deadline'],
   },
   {
-    id: '3', scenario: 'After Denial - Understanding Why', emoji: '❌',
+    id: '3', scenario: 'After Denial - Understanding Why', buddyMood: 'confused' as BuddyMood,
     intro: 'Hi, I received a denial for my prior authorization and I need to understand the specific reason.',
     phrases: ['What is the specific clinical reason for the denial?', 'What criteria was my request evaluated against?', 'What would I need to provide to get this approved?', 'I would like to request a peer-to-peer review with my physician.'],
     rebuttals: {
@@ -41,7 +43,7 @@ const SCRIPTS = [
     tips: ['Get the denial reason in writing', 'Ask for the specific policy or guideline used', 'Request a peer-to-peer review immediately'],
   },
   {
-    id: '4', scenario: 'Escalation to Supervisor', emoji: '⬆️',
+    id: '4', scenario: 'Escalation to Supervisor', buddyMood: 'celebrating' as BuddyMood,
     intro: "I've been trying to resolve a prior authorization issue and I need to speak with a supervisor.",
     phrases: ["I've called [X] times about reference [NUMBER] without resolution", "I'd like to speak with your supervisor or a case manager", 'This is a time-sensitive medical issue that needs immediate attention', 'I will be filing a formal complaint if this is not resolved today'],
     rebuttals: {
@@ -60,7 +62,7 @@ function ScriptCard({ script, isExpanded, onToggle }: { script: typeof SCRIPTS[0
     <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onToggle(); }}>
       <View style={[styles.scriptCard, { backgroundColor: colors.surface }]}>
         <View style={styles.scriptHeader}>
-          <Text style={{ fontSize: 24 }}>{script.emoji}</Text>
+          <MiniBuddy mood={script.buddyMood} size={36} />
           <Text style={[typography.h3, { color: colors.text, flex: 1 }]}>{script.scenario}</Text>
           <Text style={{ color: colors.textTertiary, fontSize: 18 }}>{isExpanded ? '▲' : '▼'}</Text>
         </View>
@@ -105,6 +107,10 @@ export default function ScriptsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
+        <View style={styles.titleRow}>
+          <MiniBuddy mood="happy" size={24} />
+          <Text style={[typography.caption, { color: colors.textSecondary }]}>PriorAuth Buddy</Text>
+        </View>
         <Text style={[typography.h1, { color: colors.text }]}>Call Scripts</Text>
         <Text style={[typography.body, { color: colors.textSecondary }]}>Know exactly what to say</Text>
       </View>
@@ -129,7 +135,8 @@ export default function ScriptsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, gap: 4 },
+  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8, gap: 2 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   buddyRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12, gap: 12 },
   buddyBubble: { flex: 1, borderRadius: radii.card, padding: 12 },
   list: { paddingHorizontal: 20, gap: 12, paddingBottom: 100 },

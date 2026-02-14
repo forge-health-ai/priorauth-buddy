@@ -63,11 +63,21 @@ export function AnimatedTabBar({ state, descriptors, navigation }: any) {
   const { colors, typography } = useTheme();
   const indicatorX = useSharedValue(0);
   const tabWidth = useSharedValue(0);
+  const tabLayouts = React.useRef<Record<number, { x: number; width: number }>>({});
 
   const indicatorStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: indicatorX.value }],
     width: tabWidth.value,
   }));
+
+  // Update indicator when active tab changes
+  React.useEffect(() => {
+    const layout = tabLayouts.current[state.index];
+    if (layout) {
+      indicatorX.value = withSpring(layout.x, springs.tab);
+      tabWidth.value = withSpring(layout.width, springs.tab);
+    }
+  }, [state.index]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.tabBar, borderTopColor: colors.tabBarBorder }]}>
@@ -89,6 +99,7 @@ export function AnimatedTabBar({ state, descriptors, navigation }: any) {
               if (!isFocused) navigation.navigate(route.name);
             }}
             onLayout={(x: number, w: number) => {
+              tabLayouts.current[index] = { x, width: w };
               if (isFocused) {
                 indicatorX.value = withSpring(x, springs.tab);
                 tabWidth.value = withSpring(w, springs.tab);
@@ -120,15 +131,13 @@ function TabButton({ label, iconName, isFocused, colors, typography, onPress, on
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={(e) => {
+        onPress();
+      }}
       style={styles.tab}
       onLayout={(e) => {
         const { x, width } = e.nativeEvent.layout;
         onLayout(x, width);
-        if (isFocused) {
-          indicatorX.value = x;
-          tabWidthVal.value = width;
-        }
       }}
     >
       <Animated.View style={[styles.tabInner, animStyle]}>

@@ -6,6 +6,7 @@ import { useTheme, radii } from '../../src/theme';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
 import { FORGEButton } from '../../src/components/FORGEButton';
 import { EmptyState } from '../../src/components/EmptyState';
+import { MiniBuddy } from '../../src/components/MiniBuddy';
 
 export default function AppealsScreen() {
   const { colors, typography } = useTheme();
@@ -16,6 +17,10 @@ export default function AppealsScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
+          <View style={styles.titleRow}>
+            <MiniBuddy mood="celebrating" size={24} />
+            <Text style={[typography.caption, { color: colors.textSecondary }]}>PriorAuth Buddy</Text>
+          </View>
           <Text style={[typography.h1, { color: colors.text }]}>Appeals</Text>
           <Text style={[typography.body, { color: colors.textSecondary }]}>AI-powered appeal letters that win</Text>
         </View>
@@ -103,7 +108,8 @@ export default function AppealsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, gap: 4 },
+  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8, gap: 2 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   buddySection: { alignItems: 'center', paddingVertical: 16, gap: 8 },
   formContent: { paddingHorizontal: 20, paddingBottom: 100 },
   formGroup: { gap: 8, marginBottom: 16 },

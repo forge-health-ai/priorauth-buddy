@@ -6,6 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTheme, radii } from '../../src/theme';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
+import { MiniBuddy } from '../../src/components/MiniBuddy';
 
 function SettingRow({ label, value, onPress }: { label: string; value?: string; onPress?: () => void }) {
   const { colors, typography } = useTheme();
@@ -25,6 +26,10 @@ export default function ProfileScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
+          <View style={styles.titleRow}>
+            <MiniBuddy mood="happy" size={24} />
+            <Text style={[typography.caption, { color: colors.textSecondary }]}>PriorAuth Buddy</Text>
+          </View>
           <Text style={[typography.h1, { color: colors.text }]}>Profile</Text>
         </View>
 
@@ -92,7 +97,8 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 100 },
-  header: { paddingTop: 16, paddingBottom: 16 },
+  header: { paddingTop: 8, paddingBottom: 16, gap: 2 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   proCard: { borderRadius: radii.card, padding: 20, marginBottom: 24 },
   proContent: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
