@@ -1,0 +1,172 @@
+[
+  {
+    "scenario": "Initial Status Check",
+    "script_intro": "Hi, I'm calling to check the status of a prior authorization request. My reference number is [NUMBER].",
+    "key_phrases": [
+      "Can you tell me the current status?",
+      "When was this request received?",
+      "What is the expected decision date?",
+      "Is there any missing information I should provide?"
+    ],
+    "rebuttals": {
+      "It's still in review": "Can you tell me specifically where it is in the review process and who is handling it?",
+      "We need more information": "What specific information do you need? Can I provide it right now over the phone?",
+      "Call back in a few days": "I understand, but can you give me a specific date? The treatment is time-sensitive."
+    },
+    "tips": [
+      "Always get the representative's name and ID",
+      "Write down the date and time of your call",
+      "Ask for a reference number if you don't have one"
+    ],
+    "sort_order": 1
+  },
+  {
+    "scenario": "Deadline Approaching (Day 10+)",
+    "script_intro": "Hi, I'm calling about an urgent prior authorization. It's been [X] days and I haven't received a decision. My reference number is [NUMBER].",
+    "key_phrases": [
+      "This request was submitted on [DATE], which is [X] days ago",
+      "Federal regulations require a decision within [14/30] days",
+      "I need to understand why there's been a delay",
+      "Can this be escalated for immediate review?"
+    ],
+    "rebuttals": {
+      "We're backed up": "I understand you're busy, but the regulatory timeline still applies. Can a supervisor expedite this?",
+      "It's with the medical director": "When did it go to the medical director? What's the expected turnaround?",
+      "We need a peer-to-peer review": "Can we schedule that today? My doctor is available."
+    },
+    "tips": [
+      "Be firm but polite - you have rights",
+      "Mention regulatory timelines (14 days standard, 72 hours urgent)",
+      "Ask to escalate if past deadline"
+    ],
+    "sort_order": 2
+  },
+  {
+    "scenario": "After Denial - Understanding Why",
+    "script_intro": "Hi, I received a denial for my prior authorization and I need to understand the specific reason. My reference number is [NUMBER].",
+    "key_phrases": [
+      "What is the specific clinical reason for the denial?",
+      "What criteria was my request evaluated against?",
+      "What would I need to provide to get this approved?",
+      "Can you send me the denial letter in writing with the specific policy cited?"
+    ],
+    "rebuttals": {
+      "It's not medically necessary": "What would make it medically necessary in your criteria? My doctor believes it is.",
+      "Try a different medication first": "Which medications would I need to try first? For how long?",
+      "It's not covered": "Is this a coverage issue or a medical necessity issue? Those are different."
+    },
+    "tips": [
+      "Get the EXACT denial reason - you need it to appeal",
+      "Ask what specific policy or guideline they used",
+      "Request everything in writing"
+    ],
+    "sort_order": 3
+  },
+  {
+    "scenario": "Requesting Expedited/Urgent Review",
+    "script_intro": "Hi, I need to request an expedited review of my prior authorization. This is medically urgent. My reference number is [NUMBER].",
+    "key_phrases": [
+      "This is a time-sensitive medical situation",
+      "My doctor has indicated this cannot wait [X] days",
+      "I'm requesting an expedited review under the 72-hour urgent timeline",
+      "Can you document this as an urgent request?"
+    ],
+    "rebuttals": {
+      "We don't do expedited reviews": "Federal law requires expedited review for urgent situations. Can I speak to a supervisor?",
+      "You need a doctor's note": "I can have my doctor call for a peer-to-peer review today. Can you set that up?",
+      "It doesn't qualify as urgent": "What are your criteria for urgent? My condition is [describe urgency]."
+    },
+    "tips": [
+      "Have your doctor document the urgency",
+      "Know that urgent requests must be decided in 72 hours",
+      "If truly urgent, ask for a peer-to-peer review same day"
+    ],
+    "sort_order": 4
+  },
+  {
+    "scenario": "Escalate to Supervisor",
+    "script_intro": "I appreciate your help, but I need to escalate this issue. May I speak with a supervisor or manager?",
+    "key_phrases": [
+      "I've been dealing with this for [X] days without resolution",
+      "I need someone with authority to make a decision",
+      "This is causing harm to my health and I need escalation",
+      "Please document that I requested supervisor escalation"
+    ],
+    "rebuttals": {
+      "A supervisor will tell you the same thing": "I understand, but I'd like to hear it from them directly. It's my right to escalate.",
+      "No supervisors are available": "When will one be available? Can I get a callback within 24 hours?",
+      "I am a supervisor": "Thank you. What is your employee ID? And who is YOUR supervisor?"
+    },
+    "tips": [
+      "Stay calm but firm",
+      "Document the rep's name before asking to escalate",
+      "If denied escalation, note it and file a complaint"
+    ],
+    "sort_order": 5
+  },
+  {
+    "scenario": "Peer-to-Peer Review Request",
+    "script_intro": "I'd like to schedule a peer-to-peer review between my prescribing doctor and your medical director.",
+    "key_phrases": [
+      "My doctor would like to discuss the medical necessity directly",
+      "When is your medical director available for a peer-to-peer?",
+      "Can we schedule this within the next 24-48 hours?",
+      "Please provide the call-in number and any reference codes needed"
+    ],
+    "rebuttals": {
+      "That's not necessary": "My doctor believes a direct conversation would help clarify the clinical rationale. It's a standard process.",
+      "The medical director is booked": "What's the earliest available slot? This is time-sensitive.",
+      "The decision is final": "A peer-to-peer is part of the appeals process. I'm formally requesting one."
+    },
+    "tips": [
+      "This is often the most effective way to overturn a denial",
+      "Give your doctor the specific denial reason before the call",
+      "Your doctor should have supporting documentation ready"
+    ],
+    "sort_order": 6
+  },
+  {
+    "scenario": "Filing a Formal Appeal",
+    "script_intro": "I'm calling to file a formal appeal of the denial for my prior authorization. My reference number is [NUMBER].",
+    "key_phrases": [
+      "I want to formally appeal this decision",
+      "What is the process to submit my appeal?",
+      "What is the deadline for submitting my appeal?",
+      "Where do I send supporting documentation?"
+    ],
+    "rebuttals": {
+      "You can appeal online": "Can you also accept it by fax or mail? I want confirmation it was received.",
+      "The appeal deadline has passed": "When was the denial letter sent? I have [30/60/180] days from receipt, not from the decision date.",
+      "Appeals take 30-60 days": "Is there an expedited appeal process for urgent medical situations?"
+    },
+    "tips": [
+      "Always appeal - 50% of denials are overturned",
+      "Include a letter from your doctor",
+      "Send via certified mail or fax with confirmation",
+      "Keep copies of everything"
+    ],
+    "sort_order": 7
+  },
+  {
+    "scenario": "External Review / State Insurance Commissioner",
+    "script_intro": "I've exhausted the internal appeals process and I'm requesting an external review, OR I'm filing a complaint with the state insurance commissioner.",
+    "key_phrases": [
+      "I'm requesting an Independent External Review",
+      "How do I submit this to the external review organization?",
+      "I'm also filing a complaint with [STATE] Department of Insurance",
+      "Please provide written confirmation of the internal appeal denial"
+    ],
+    "rebuttals": {
+      "You haven't exhausted internal appeals": "I have. I appealed on [DATE] and received a final denial on [DATE]. I have documentation.",
+      "External review isn't available for this": "What types of denials qualify? This is a medical necessity denial, which typically qualifies.",
+      "That won't change anything": "That's my decision to make. Please provide the information I need to proceed."
+    },
+    "tips": [
+      "External review is decided by an independent third party",
+      "Your state insurance commissioner can investigate the insurer",
+      "This is your final recourse - use it",
+      "Consider contacting a patient advocate organization"
+    ],
+    "sort_order": 8
+  }
+]

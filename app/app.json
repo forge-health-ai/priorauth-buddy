@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "PriorAuth Buddy",
+    "slug": "priorauth-buddy",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "scheme": "priorauth-buddy",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F0F14"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ai.forgehealth.priorauthbuddy"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F0F14"
+      },
+      "package": "ai.forgehealth.priorauthbuddy",
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ]
+  }
+}
