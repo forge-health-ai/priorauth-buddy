@@ -131,7 +131,7 @@ export default function HomeScreen() {
           <Text style={[typography.body, { color: colors.textSecondary, textAlign: 'center' }]}>{getGreeting()}</Text>
         </Animated.View>
         <EmptyState
-          mood="sleeping"
+          mood="happy"
           title="Nothing here yet"
           subtitle="Tap + to add your first case and start fighting back"
           actionLabel="Add Your First Case"
