@@ -73,6 +73,7 @@ alter table public.call_scripts enable row level security;
 
 -- Policies (drop first to avoid duplicates)
 drop policy if exists "Users can view own profile" on public.profiles;
+drop policy if exists "Users can insert own profile" on public.profiles;
 drop policy if exists "Users can update own profile" on public.profiles;
 drop policy if exists "Users can view own cases" on public.cases;
 drop policy if exists "Users can insert own cases" on public.cases;
@@ -85,6 +86,7 @@ drop policy if exists "Users can insert own appeals" on public.appeals;
 drop policy if exists "Anyone can view call scripts" on public.call_scripts;
 
 create policy "Users can view own profile" on public.profiles for select using (auth.uid() = id);
+create policy "Users can insert own profile" on public.profiles for insert with check (auth.uid() = id);
 create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
 create policy "Users can view own cases" on public.cases for select using (auth.uid() = user_id);
 create policy "Users can insert own cases" on public.cases for insert with check (auth.uid() = user_id);

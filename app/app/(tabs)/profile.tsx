@@ -50,24 +50,24 @@ export default function ProfileScreen() {
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id);
 
-        // Fetch call logs count
+        // Fetch call logs count (from case_updates with type 'call')
         const { count: callsCount } = await supabase
-          .from('call_logs')
+          .from('case_updates')
           .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id);
+          .eq('update_type', 'call');
 
-        // Fetch wins (appeal_won or approved status)
+        // Fetch wins (appeal_approved or approved status)
         const { count: winsCount } = await supabase
           .from('cases')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
-          .in('status', ['appeal_won', 'approved']);
+          .in('status', ['appeal_approved', 'approved']);
 
         setStats({
-          cases: casesCount || 0,
-          appeals: appealsCount || 0,
-          calls: callsCount || 0,
-          wins: winsCount || 0,
+          cases: casesCount ?? 0,
+          appeals: appealsCount ?? 0,
+          calls: callsCount ?? 0,
+          wins: winsCount ?? 0,
         });
       }
     } catch (error) {
