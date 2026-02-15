@@ -4,6 +4,12 @@
 const ANTHROPIC_API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || '';
 const MODEL = 'claude-3-5-haiku-20241022';
 
+function checkApiKey() {
+  if (!ANTHROPIC_API_KEY) {
+    throw new Error('AI features require an API key. Please contact support.');
+  }
+}
+
 interface AppealInput {
   procedureName: string;
   procedureCode?: string;
@@ -37,6 +43,7 @@ Rules:
 - Output the letter text only, no commentary`;
 
 export async function generateAppealLetter(input: AppealInput): Promise<AppealResult> {
+  checkApiKey();
   const userPrompt = `Generate an appeal letter for:
 - Procedure: ${input.procedureName}${input.procedureCode ? ` (CPT ${input.procedureCode})` : ''}
 - Insurance Company: ${input.insurerName}
@@ -94,6 +101,7 @@ export async function generateDOIComplaint(input: {
   state: string;
   patientContext?: string;
 }): Promise<{ complaint: string; costUsd: number }> {
+  checkApiKey();
   const userPrompt = `Generate a formal complaint letter to the ${input.state} Department of Insurance regarding:
 - Insurance Company: ${input.insurerName}
 - Denied Procedure: ${input.procedureName}
