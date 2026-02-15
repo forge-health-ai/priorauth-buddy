@@ -106,31 +106,28 @@ export default function CaseDetailScreen() {
         providerName: caseData.provider_name,
       });
 
-      // Save appeal to database
+      // Show appeal letter inline FIRST
+      setAppealLetter(result.letter);
+
+      // Save appeal to database (non-blocking)
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from('appeals').insert({
+        supabase.from('appeals').insert({
           case_id: caseData.id,
           user_id: user.id,
           letter_text: result.letter,
-          model_used: result.model,
-        });
+        }).then(() => {});
 
-        // Update case status
-        await supabase.from('cases').update({ status: 'appealing' }).eq('id', caseData.id);
+        supabase.from('cases').update({ status: 'appealing' }).eq('id', caseData.id).then(() => {});
 
-        // Add event
-        await supabase.from('case_events').insert({
+        supabase.from('case_events').insert({
           case_id: caseData.id,
           user_id: user.id,
           event_type: 'appeal_generated',
           title: 'Appeal Letter Generated',
           description: 'AI appeal letter generated and saved',
-        });
+        }).then(() => {});
       }
-
-      // Show appeal letter inline
-      setAppealLetter(result.letter);
     } catch (error) {
       console.error('Appeal generation error:', error);
       Alert.alert('Error', 'Failed to generate appeal letter. Please try again.');
@@ -155,30 +152,21 @@ export default function CaseDetailScreen() {
         state: 'CA', // Default to CA, should be from user profile
       });
 
-      // Save complaint to database
+      // Show complaint inline FIRST
+      setComplaintLetter(result.complaint);
+
+      // Save to database (non-blocking)
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from('doi_complaints').insert({
-          case_id: caseData.id,
-          user_id: user.id,
-          complaint_text: result.complaint,
-          state: 'CA',
-        });
-
-        // Update case status
-        await supabase.from('cases').update({ status: 'complaint_filed' }).eq('id', caseData.id);
-
-        // Add event
-        await supabase.from('case_events').insert({
+        supabase.from('cases').update({ status: 'complaint_filed' }).eq('id', caseData.id).then(() => {});
+        supabase.from('case_events').insert({
           case_id: caseData.id,
           user_id: user.id,
           event_type: 'complaint_filed',
           title: 'DOI Complaint Filed',
           description: 'DOI complaint generated and filed',
-        });
+        }).then(() => {});
       }
-
-            setComplaintLetter(result.complaint);
     } catch (error) {
       console.error('Complaint generation error:', error);
       Alert.alert('Error', 'Failed to generate complaint. Please try again.');
