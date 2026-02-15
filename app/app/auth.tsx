@@ -47,21 +47,8 @@ export default function AuthScreen() {
       return;
     }
 
-    // Create profile record for new user
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          email: data.user.email,
-          terms_accepted_at: null,
-          terms_accepted_version: null,
-        });
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-      }
-    }
+    // Profile is created automatically by database trigger (handle_new_user)
+    // No client-side insert needed - trigger handles it securely
 
     setLoading(false);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
