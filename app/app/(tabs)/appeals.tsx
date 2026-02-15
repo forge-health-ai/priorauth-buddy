@@ -224,7 +224,7 @@ export default function AppealsScreen() {
             <FORGEButton 
               title={generating ? 'Generating...' : 'Generate Appeal Letter'} 
               onPress={handleGenerate} 
-              disabled={!selectedCaseId || generating}
+              disabled={generating}
               loading={generating}
             />
             <FORGEButton title="Cancel" onPress={resetForm} variant="ghost" />
