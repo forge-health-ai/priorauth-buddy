@@ -48,9 +48,7 @@ export default function TermsScreen({ onAccepted }: TermsScreenProps) {
         .from('profiles')
         .upsert({
           id: user.id,
-          email: user.email,
           terms_accepted_at: new Date().toISOString(),
-          terms_accepted_version: TERMS_VERSION,
         }, { onConflict: 'id' });
 
       if (error) {
