@@ -295,7 +295,7 @@ export default function CaseDetailScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={20}>
+          <Pressable onPress={() => { router.push('/(tabs)/cases') }} hitSlop={20}>
             <Text style={[typography.body, { color: colors.primary }]}>← Back</Text>
           </Pressable>
           <View style={styles.titleRow}>
@@ -316,7 +316,7 @@ export default function CaseDetailScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={20}>
+        <Pressable onPress={() => { router.push('/(tabs)/cases') }} hitSlop={20}>
           <Text style={[typography.body, { color: colors.primary }]}>← Back</Text>
         </Pressable>
         <View style={styles.titleRow}>
