@@ -1,6 +1,8 @@
 // AI features via Claude Haiku
 // Cost: ~$0.002 per call
 
+import { INSURER_INTEL } from '../data/insurer-intel';
+
 const ANTHROPIC_API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || '';
 const MODEL = 'claude-3-5-haiku-20241022';
 
@@ -44,6 +46,20 @@ Rules:
 
 export async function generateAppealLetter(input: AppealInput): Promise<AppealResult> {
   checkApiKey();
+  // Get insurer-specific intelligence
+  const intel = INSURER_INTEL[input.insurerName];
+  const insurerContext = intel ? `
+
+INSURER INTELLIGENCE (use this to tailor the letter):
+- ${input.insurerName} has a ${intel.denialRate} denial rate
+- Common denial patterns: ${intel.commonDenials.join(', ')}
+- What works against them: ${intel.bestStrategy}
+- Escalation approach: ${intel.escalationTip}
+- Key leverage: ${intel.proTip}
+- Average appeal timeline: ${intel.avgAppealTime}
+
+Use this intelligence to craft language specifically calibrated for ${input.insurerName}. Reference their known criteria and review processes. Include escalation language that this insurer responds to.` : '';
+
   const userPrompt = `Generate an appeal letter for:
 - Procedure: ${input.procedureName}${input.procedureCode ? ` (CPT ${input.procedureCode})` : ''}
 - Insurance Company: ${input.insurerName}
@@ -51,6 +67,7 @@ export async function generateAppealLetter(input: AppealInput): Promise<AppealRe
 ${input.providerName ? `- Treating Provider: ${input.providerName}` : ''}
 ${input.patientContext ? `- Additional Context: ${input.patientContext}` : ''}
 ${input.state ? `- Patient State: ${input.state}` : ''}
+${insurerContext}
 
 Write the appeal letter now. Use [PATIENT NAME], [PATIENT ADDRESS], [DATE] as placeholders.`;
 
@@ -158,7 +175,7 @@ export interface CoachResponse {
   costUsd: number;
 }
 
-const COACH_SYSTEM_PROMPT = `You are a training partner helping someone practice calling their insurance company about a prior authorization. Play the role of an insurance representative. Be realistic but not hostile. After each user response, briefly stay in character, then add a [COACH] section with feedback on their tone, assertiveness, and what to try next. Keep responses under 150 words.`;
+const COACH_SYSTEM_PROMPT = `You are a training partner helping someone practice calling their insurance company about a prior authorization. Play the role of an insurance representative. Be realistic but not hostile. After each user response, briefly stay in character, then add a [COACH] section with feedback on their tone, assertiveness, and what to try next. If you know specific things about this insurer's patterns, weave that into your coaching. Keep responses under 150 words.`;
 
 export async function getCoachResponse(
   scenario: string,
