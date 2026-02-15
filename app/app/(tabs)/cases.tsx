@@ -116,9 +116,9 @@ export default function CasesScreen() {
 
       {cases.length === 0 && !loading ? (
         <EmptyState
-          mood="confused"
+          mood="sleeping"
           title="No cases yet"
-          subtitle="Track your prior authorizations and never miss a deadline. Tap + to get started."
+          subtitle="Track your prior authorizations and never miss a deadline. Tap + to wake Buddy up!"
         />
       ) : (
         <ScrollView
