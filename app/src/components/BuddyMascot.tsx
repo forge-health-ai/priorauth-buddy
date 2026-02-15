@@ -12,7 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
-export type BuddyMood = 'happy' | 'thinking' | 'angry' | 'celebrating' | 'confused' | 'sleeping';
+export type BuddyMood = 'happy' | 'thinking' | 'angry' | 'celebrating' | 'confused' | 'sleeping' | 'excited' | 'determined' | 'curious';
 
 interface BuddyMascotProps {
   mood?: BuddyMood;
@@ -115,6 +115,37 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress }: BuddyMascot
             <Circle cx={cx2 + 1} cy={cy - 1} r={pr} fill={eyeColor} />
           </G>
         );
+      case 'excited':
+        return (
+          <G>
+            <Circle cx={cx1} cy={cy} r={r * 1.3} fill="white" />
+            <Circle cx={cx1} cy={cy} r={pr * 1.3} fill={eyeColor} />
+            <Circle cx={cx2} cy={cy} r={r * 1.3} fill="white" />
+            <Circle cx={cx2} cy={cy} r={pr * 1.3} fill={eyeColor} />
+            <Circle cx={cx1 + r * 0.8} cy={cy - r * 0.8} r={pr * 0.4} fill="white" />
+            <Circle cx={cx2 + r * 0.8} cy={cy - r * 0.8} r={pr * 0.4} fill="white" />
+          </G>
+        );
+      case 'determined':
+        return (
+          <G>
+            <Circle cx={cx1} cy={cy} r={r} fill="white" />
+            <Circle cx={cx1} cy={cy} r={pr} fill={eyeColor} />
+            <Circle cx={cx2} cy={cy} r={r} fill="white" />
+            <Circle cx={cx2} cy={cy} r={pr} fill={eyeColor} />
+            <Path d={`M${cx1 - r * 1.8} ${cy - r * 2} L${cx1 + r * 1.8} ${cy - r * 1.3}`} stroke={eyeColor} strokeWidth={2} strokeLinecap="round" />
+            <Path d={`M${cx2 + r * 1.8} ${cy - r * 2} L${cx2 - r * 1.8} ${cy - r * 1.3}`} stroke={eyeColor} strokeWidth={2} strokeLinecap="round" />
+          </G>
+        );
+      case 'curious':
+        return (
+          <G>
+            <Circle cx={cx1} cy={cy} r={r * 1.1} fill="white" />
+            <Circle cx={cx1 + 1} cy={cy} r={pr * 1.1} fill={eyeColor} />
+            <Circle cx={cx2} cy={cy - 2} r={r * 1.3} fill="white" />
+            <Circle cx={cx2 + 1} cy={cy - 2} r={pr * 1.2} fill={eyeColor} />
+          </G>
+        );
       default:
         return (
           <G>
@@ -143,6 +174,12 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress }: BuddyMascot
         return <Path d={`M${mx - w * 0.6} ${my} Q${mx} ${my + 5} ${mx + w * 0.6} ${my - 2}`} stroke={eyeColor} strokeWidth={2} fill="none" strokeLinecap="round" />;
       case 'thinking':
         return <Circle cx={mx + w * 0.5} cy={my} r={w * 0.35} fill={eyeColor} opacity={0.4} />;
+      case 'excited':
+        return <Path d={`M${mx - w} ${my - 3} Q${mx} ${my + w * 1.2} ${mx + w} ${my - 3}`} stroke={eyeColor} strokeWidth={2.5} fill="#FF6B35" fillOpacity={0.2} strokeLinecap="round" />;
+      case 'determined':
+        return <Path d={`M${mx - w * 0.8} ${my} L${mx + w * 0.8} ${my}`} stroke={eyeColor} strokeWidth={2.5} strokeLinecap="round" />;
+      case 'curious':
+        return <Ellipse cx={mx} cy={my + 1} rx={w * 0.45} ry={w * 0.4} fill={eyeColor} opacity={0.4} />;
       default:
         return <Path d={`M${mx - w} ${my} Q${mx} ${my + w * 0.8} ${mx + w} ${my}`} stroke={eyeColor} strokeWidth={2.5} fill="none" strokeLinecap="round" />;
     }

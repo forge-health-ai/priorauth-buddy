@@ -13,6 +13,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { supabase } from '../src/lib/supabase';
 import AuthScreen from './auth';
 import TermsScreen from './terms';
+import OnboardingScreen from './onboarding';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -21,6 +22,7 @@ export default function RootLayout() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [needsTerms, setNeedsTerms] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   
   const [fontsLoaded] = useFonts({
     Outfit_400Regular,
@@ -34,7 +36,7 @@ export default function RootLayout() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('terms_accepted_at')
+        .select('terms_accepted_at, display_name')
         .eq('id', userId)
         .single();
 
@@ -46,6 +48,8 @@ export default function RootLayout() {
 
       // User needs to accept terms if terms_accepted_at is null
       setNeedsTerms(!data?.terms_accepted_at);
+      // User needs onboarding if they haven't set a display name yet
+      setNeedsOnboarding(!data?.display_name);
     } catch (error) {
       console.error('Error checking terms:', error);
       // Default to requiring terms on error (safe default)
@@ -100,6 +104,16 @@ export default function RootLayout() {
       <>
         <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
         <TermsScreen onAccepted={() => setNeedsTerms(false)} />
+      </>
+    );
+  }
+
+  // Show onboarding if they accepted terms but haven't met Buddy yet
+  if (needsOnboarding) {
+    return (
+      <>
+        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+        <OnboardingScreen onComplete={() => setNeedsOnboarding(false)} />
       </>
     );
   }
