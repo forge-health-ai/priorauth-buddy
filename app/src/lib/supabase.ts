@@ -15,6 +15,18 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 // Types
+export interface Profile {
+  id: string;
+  email?: string;
+  is_pro?: boolean;
+  pro_expires_at?: string;
+  cases_count?: number;
+  appeals_this_month?: number;
+  terms_accepted_at?: string;
+  terms_accepted_version?: string;
+  created_at?: string;
+}
+
 export interface Case {
   id: string;
   user_id: string;

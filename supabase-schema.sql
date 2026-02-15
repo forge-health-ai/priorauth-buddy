@@ -12,6 +12,8 @@ create table public.profiles (
   pro_expires_at timestamp with time zone,
   cases_count integer default 0,
   appeals_this_month integer default 0,
+  terms_accepted_at timestamp with time zone,
+  terms_accepted_version text,
   created_at timestamp with time zone default timezone('utc'::text, now())
 );
 

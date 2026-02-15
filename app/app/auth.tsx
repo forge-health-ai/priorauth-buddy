@@ -41,18 +41,31 @@ export default function AuthScreen() {
       password: password.trim(),
     });
 
-    setLoading(false);
-
     if (error) {
+      setLoading(false);
       Alert.alert('Sign Up Error', error.message);
       return;
     }
 
+    // Create profile record for new user
+    if (data.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: data.user.id,
+          email: data.user.email,
+          terms_accepted_at: null,
+          terms_accepted_version: null,
+        });
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+      }
+    }
+
+    setLoading(false);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert(
-      'Welcome to PriorAuth Buddy!',
-      'Your account has been created. Buddy is ready to fight for you.'
-    );
+    // Note: Terms screen will be shown automatically by _layout.tsx
   };
 
   const handleSignIn = async () => {
