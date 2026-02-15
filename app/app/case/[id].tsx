@@ -10,7 +10,7 @@ import { FORGEButton } from '../../src/components/FORGEButton';
 import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
 import { supabase, Case } from '../../src/lib/supabase';
-import { generateAppealLetter, generateDOIComplaint } from '../../src/lib/ai';
+import { generateAppealLetter, generateDOIComplaint, analyzeDenialLetter, DenialAnalysis } from '../../src/lib/ai';
 
 interface CaseEvent {
   id: string;
@@ -39,6 +39,10 @@ export default function CaseDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [generatingAppeal, setGeneratingAppeal] = useState(false);
   const [generatingComplaint, setGeneratingComplaint] = useState(false);
+  const [denialText, setDenialText] = useState('');
+  const [showAnalyzer, setShowAnalyzer] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<DenialAnalysis | null>(null);
 
   useEffect(() => {
     fetchCaseDetails();
@@ -223,6 +227,53 @@ export default function CaseDetailScreen() {
     });
   };
 
+  const handleAnalyzeDenial = async () => {
+    if (!denialText.trim() || !caseData) return;
+    
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setAnalyzing(true);
+    
+    try {
+      const result = await analyzeDenialLetter(denialText, caseData.insurer_name || undefined);
+      setAnalysisResult(result);
+      
+      // Save analysis to case notes
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const analysisNote = `\n\n[AI Denial Analysis - ${new Date().toLocaleDateString()}]\n\nDenial Reason: ${result.denialReason}\n\nClinical Criteria: ${result.clinicalCriteria}\n\nTimeline: ${result.timeline}\n\nAppeal Angles:\n${result.appealAngles.map((a, i) => `${i + 1}. ${a}`).join('\n')}\n\nNext Steps: ${result.nextSteps}`;
+        
+        const newNotes = caseData.notes 
+          ? caseData.notes + analysisNote
+          : analysisNote;
+        
+        await supabase
+          .from('cases')
+          .update({ notes: newNotes })
+          .eq('id', caseData.id);
+        
+        // Update local state
+        setCaseData(prev => prev ? { ...prev, notes: newNotes } : null);
+        
+        // Add event
+        await supabase.from('case_events').insert({
+          case_id: caseData.id,
+          user_id: user.id,
+          event_type: 'denial_analyzed',
+          description: 'AI denial letter analysis completed',
+        });
+        
+        fetchCaseDetails();
+      }
+      
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      console.error('Analysis error:', error);
+      Alert.alert('Error', 'Failed to analyze denial letter. Please try again.');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -361,6 +412,91 @@ export default function CaseDetailScreen() {
           </View>
         </Animated.View>
 
+        {caseData.denial_reason && (
+          <Animated.View entering={FadeInDown.delay(250).springify()} style={styles.analyzerSection}>
+            <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowAnalyzer(!showAnalyzer); }}>
+              <View style={[styles.analyzerHeader, { backgroundColor: colors.surface }]}>
+                <BuddyMascot mood="determined" size={48} />
+                <View style={styles.analyzerTitle}>
+                  <Text style={[typography.h3, { color: colors.text }]}>Analyze My Denial</Text>
+                  <Text style={[typography.body, { color: colors.textSecondary }]}>
+                    Paste your denial letter for AI analysis
+                  </Text>
+                </View>
+                <Text style={{ color: colors.textTertiary, fontSize: 18 }}>{showAnalyzer ? '▲' : '▼'}</Text>
+              </View>
+            </Pressable>
+
+            {showAnalyzer && (
+              <Animated.View entering={FadeInDown.duration(200)}>
+                {!analysisResult ? (
+                  <View style={styles.analyzerInputSection}>
+                    <TextInput
+                      style={[styles.analyzerInput, {
+                        borderColor: colors.tabBarBorder,
+                        color: colors.text,
+                        fontFamily: 'Outfit_400Regular',
+                        backgroundColor: colors.background,
+                      }]}
+                      placeholder="Paste your denial letter text here..."
+                      placeholderTextColor={colors.textTertiary}
+                      value={denialText}
+                      onChangeText={setDenialText}
+                      multiline
+                      numberOfLines={6}
+                      textAlignVertical="top"
+                    />
+                    <FORGEButton
+                      title={analyzing ? 'Analyzing...' : 'Analyze Denial'}
+                      onPress={handleAnalyzeDenial}
+                      loading={analyzing}
+                      disabled={!denialText.trim()}
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.analysisResults}>
+                    <LinearGradient colors={[`${colors.accent}10`, `${colors.accent}05`]} style={[styles.analysisCard, { borderColor: `${colors.accent}20` }]}>
+                      <Text style={[typography.caption, { color: colors.accent, fontFamily: 'Outfit_600SemiBold' }]}>DENIAL REASON</Text>
+                      <Text style={[typography.body, { color: colors.text }]}>{analysisResult.denialReason}</Text>
+                    </LinearGradient>
+
+                    <LinearGradient colors={[`${colors.secondary}10`, `${colors.secondary}05`]} style={[styles.analysisCard, { borderColor: `${colors.secondary}20` }]}>
+                      <Text style={[typography.caption, { color: colors.secondary, fontFamily: 'Outfit_600SemiBold' }]}>CLINICAL CRITERIA CITED</Text>
+                      <Text style={[typography.body, { color: colors.text }]}>{analysisResult.clinicalCriteria}</Text>
+                    </LinearGradient>
+
+                    <LinearGradient colors={[`${colors.warning}10`, `${colors.warning}05`]} style={[styles.analysisCard, { borderColor: `${colors.warning}20` }]}>
+                      <Text style={[typography.caption, { color: colors.warning, fontFamily: 'Outfit_600SemiBold' }]}>REGULATORY TIMELINE</Text>
+                      <Text style={[typography.body, { color: colors.text }]}>{analysisResult.timeline}</Text>
+                    </LinearGradient>
+
+                    <View style={[styles.analysisCard, { backgroundColor: colors.surface, borderColor: colors.tabBarBorder }]}>
+                      <Text style={[typography.caption, { color: colors.textSecondary, fontFamily: 'Outfit_600SemiBold' }]}>TOP 3 APPEAL ANGLES</Text>
+                      {analysisResult.appealAngles.map((angle, i) => (
+                        <View key={i} style={styles.appealAngleRow}>
+                          <Text style={[styles.angleNumber, { color: colors.primary }]}>{i + 1}</Text>
+                          <Text style={[typography.body, { color: colors.text, flex: 1 }]}>{angle}</Text>
+                        </View>
+                      ))}
+                    </View>
+
+                    <LinearGradient colors={[`${colors.success}10`, `${colors.success}05`]} style={[styles.analysisCard, { borderColor: `${colors.success}20` }]}>
+                      <Text style={[typography.caption, { color: colors.success, fontFamily: 'Outfit_600SemiBold' }]}>RECOMMENDED NEXT STEPS</Text>
+                      <Text style={[typography.body, { color: colors.text }]}>{analysisResult.nextSteps}</Text>
+                    </LinearGradient>
+
+                    <FORGEButton
+                      title="Analyze Another Letter"
+                      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setAnalysisResult(null); setDenialText(''); }}
+                      variant="secondary"
+                    />
+                  </View>
+                )}
+              </Animated.View>
+            )}
+          </Animated.View>
+        )}
+
         <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.timelineSection}>
           <Text style={[typography.h3, { color: colors.text }]}>Timeline</Text>
           {events.length === 0 ? (
@@ -404,6 +540,53 @@ const styles = StyleSheet.create({
   notesBox: { borderWidth: 1, borderRadius: radii.card, padding: 16, marginTop: 8 },
   actionsSection: { gap: 12 },
   actionButtons: { gap: 12 },
+  analyzerSection: { gap: 12 },
+  analyzerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: radii.card,
+    shadowColor: 'rgba(0,0,0,0.06)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  analyzerTitle: { flex: 1, gap: 2 },
+  analyzerInputSection: { gap: 12, marginTop: 12 },
+  analyzerInput: {
+    borderWidth: 1,
+    borderRadius: radii.card,
+    padding: 16,
+    minHeight: 120,
+    textAlignVertical: 'top',
+    fontSize: 15,
+  },
+  analysisResults: { gap: 12, marginTop: 12 },
+  analysisCard: {
+    padding: 16,
+    borderRadius: radii.card,
+    borderWidth: 1,
+    gap: 8,
+  },
+  appealAngleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginTop: 8,
+  },
+  angleNumber: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(255,107,53,0.15)',
+    textAlign: 'center',
+    lineHeight: 22,
+    fontSize: 12,
+    fontFamily: 'Outfit_600SemiBold',
+    overflow: 'hidden',
+  },
   timelineSection: { gap: 12 },
   timelineItem: { flexDirection: 'row', gap: 12, paddingVertical: 8, position: 'relative' },
   timelineDot: { width: 10, height: 10, borderRadius: 5, marginTop: 4 },

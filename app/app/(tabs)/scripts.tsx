@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, useSharedValue, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTheme, radii, springs } from '../../src/theme';
@@ -55,7 +56,7 @@ const SCRIPTS: Array<{ id: string; scenario: string; buddyMood: BuddyMood; intro
   },
 ];
 
-function ScriptCard({ script, isExpanded, onToggle }: { script: typeof SCRIPTS[0]; isExpanded: boolean; onToggle: () => void }) {
+function ScriptCard({ script, isExpanded, onToggle, onPractice }: { script: typeof SCRIPTS[0]; isExpanded: boolean; onToggle: () => void; onPractice: () => void }) {
   const { colors, typography } = useTheme();
 
   return (
@@ -94,6 +95,16 @@ function ScriptCard({ script, isExpanded, onToggle }: { script: typeof SCRIPTS[0
             {script.tips.map((tip, i) => (
               <Text key={i} style={[typography.body, { color: colors.textSecondary, marginBottom: 4 }]}>• {tip}</Text>
             ))}
+
+            <Pressable
+              onPress={onPractice}
+              style={[styles.practiceButton, { backgroundColor: colors.accent }]}
+            >
+              <MiniBuddy mood="happy" size={20} />
+              <Text style={[typography.body, { color: '#fff', fontFamily: 'Outfit_600SemiBold' }]}>
+                Practice This Call
+              </Text>
+            </Pressable>
           </Animated.View>
         )}
     </View>
@@ -102,7 +113,20 @@ function ScriptCard({ script, isExpanded, onToggle }: { script: typeof SCRIPTS[0
 
 export default function ScriptsScreen() {
   const { colors, typography } = useTheme();
+  const router = useRouter();
   const [expanded, setExpanded] = useState<string | null>(null);
+
+  const handlePractice = (script: typeof SCRIPTS[0]) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push({
+      pathname: '/call-coach',
+      params: {
+        scenario: script.scenario,
+        intro: script.intro,
+        buddyMood: script.buddyMood,
+      },
+    });
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -118,14 +142,19 @@ export default function ScriptsScreen() {
       <View style={styles.buddyRow}>
         <BuddyMascot mood="happy" size={60} />
         <View style={[styles.buddyBubble, { backgroundColor: `${colors.primary}14` }]}>
-          <Text style={[typography.body, { color: colors.text }]}>Pick a scenario and I'll coach you through the call! 🛡️</Text>
+          <Text style={[typography.body, { color: colors.text }]}>Pick a scenario and I'll coach you through the call!</Text>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
         {SCRIPTS.map((script, i) => (
           <Animated.View key={script.id} entering={FadeInDown.delay(i * 80).springify()}>
-            <ScriptCard script={script} isExpanded={expanded === script.id} onToggle={() => setExpanded(expanded === script.id ? null : script.id)} />
+            <ScriptCard
+              script={script}
+              isExpanded={expanded === script.id}
+              onToggle={() => setExpanded(expanded === script.id ? null : script.id)}
+              onPractice={() => handlePractice(script)}
+            />
           </Animated.View>
         ))}
       </ScrollView>
@@ -145,4 +174,13 @@ const styles = StyleSheet.create({
   section: { marginTop: 16, padding: 12, borderRadius: radii.button, borderLeftWidth: 3, gap: 6 },
   phraseRow: { paddingVertical: 6 },
   rebuttalBlock: { paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.02)', borderRadius: radii.button, marginBottom: 8 },
+  practiceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 20,
+  },
 });

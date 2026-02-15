@@ -9,6 +9,7 @@ import { FORGEButton } from '../../src/components/FORGEButton';
 import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
 import { supabase } from '../../src/lib/supabase';
+import { getInsurerIntel, InsurerIntel } from '../../src/data/insurer-intel';
 
 const INSURERS = [
   'UnitedHealthcare', 'Anthem / Elevance', 'Cigna', 'Aetna / CVS Health',
@@ -29,6 +30,8 @@ export default function AddCaseScreen() {
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
   const [saving, setSaving] = useState(false);
+  const [insurerIntel, setInsurerIntel] = useState<InsurerIntel | null>(null);
+  const [showIntel, setShowIntel] = useState(false);
   const [form, setForm] = useState({
     procedureName: '',
     procedureCode: '',
@@ -45,6 +48,16 @@ export default function AddCaseScreen() {
 
   const updateField = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
+    
+    // Load insurer intelligence when insurer is selected
+    if (field === 'insurerName') {
+      const intel = getInsurerIntel(value);
+      setInsurerIntel(intel);
+      if (intel) {
+        setShowIntel(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    }
   };
 
   const canProceed = () => {
@@ -204,6 +217,73 @@ export default function AddCaseScreen() {
         ))}
       </ScrollView>
 
+      {showIntel && insurerIntel && (
+        <Animated.View entering={FadeInDown.duration(300).springify()} style={styles.intelCard}>
+          <Pressable onPress={() => setShowIntel(!showIntel)}>
+            <View style={[styles.intelHeader, { backgroundColor: `${colors.primary}10` }]}>
+              <BuddyMascot mood="thinking" size={40} />
+              <View style={styles.intelTitle}>
+                <Text style={[typography.h3, { color: colors.text }]}>Know Your Opponent</Text>
+                <Text style={[typography.caption, { color: colors.textSecondary }]}>
+                  Intelligence on {insurerIntel.name}
+                </Text>
+              </View>
+              <Text style={{ color: colors.textTertiary, fontSize: 18 }}>{showIntel ? '▲' : '▼'}</Text>
+            </View>
+          </Pressable>
+          
+          <View style={[styles.intelBody, { backgroundColor: colors.surface }]}>
+            <View style={styles.intelRow}>
+              <View style={styles.intelItem}>
+                <Text style={[typography.caption, { color: colors.textSecondary }]}>Denial Rate</Text>
+                <Text style={[typography.h3, { color: colors.error }]}>{insurerIntel.denialRate}</Text>
+              </View>
+              <View style={styles.intelItem}>
+                <Text style={[typography.caption, { color: colors.textSecondary }]}>Avg Appeal Time</Text>
+                <Text style={[typography.h3, { color: colors.text }]}>{insurerIntel.avgAppealTime}</Text>
+              </View>
+            </View>
+
+            <View style={styles.intelSection}>
+              <Text style={[typography.caption, { color: colors.primary, fontFamily: 'Outfit_600SemiBold' }]}>
+                Common Denials
+              </Text>
+              {insurerIntel.commonDenials.map((denial, i) => (
+                <Text key={i} style={[typography.body, { color: colors.textSecondary }]}>• {denial}</Text>
+              ))}
+            </View>
+
+            <View style={styles.intelSection}>
+              <Text style={[typography.caption, { color: colors.primary, fontFamily: 'Outfit_600SemiBold' }]}>
+                Best Strategy
+              </Text>
+              <Text style={[typography.body, { color: colors.text }]}>{insurerIntel.bestStrategy}</Text>
+            </View>
+
+            <View style={styles.intelSection}>
+              <Text style={[typography.caption, { color: colors.primary, fontFamily: 'Outfit_600SemiBold' }]}>
+                Phone Hours
+              </Text>
+              <Text style={[typography.body, { color: colors.text }]}>{insurerIntel.phoneHours}</Text>
+            </View>
+
+            <View style={styles.intelSection}>
+              <Text style={[typography.caption, { color: colors.primary, fontFamily: 'Outfit_600SemiBold' }]}>
+                Escalation Tip
+              </Text>
+              <Text style={[typography.body, { color: colors.text }]}>{insurerIntel.escalationTip}</Text>
+            </View>
+
+            <View style={[styles.intelProTip, { backgroundColor: `${colors.accent}10`, borderColor: `${colors.accent}30` }]}>
+              <Text style={[typography.caption, { color: colors.accent, fontFamily: 'Outfit_600SemiBold' }]}>
+                Pro Tip
+              </Text>
+              <Text style={[typography.body, { color: colors.text }]}>{insurerIntel.proTip}</Text>
+            </View>
+          </View>
+        </Animated.View>
+      )}
+
       <View style={styles.field}>
         <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: 6 }]}>Policy Number (optional)</Text>
         <TextInput
@@ -339,4 +419,40 @@ const styles = StyleSheet.create({
   urgencyRow: { flexDirection: 'row', gap: 8 },
   urgencyChip: { flex: 1, borderWidth: 1, borderRadius: radii.button, padding: 12 },
   footer: { paddingHorizontal: 20, paddingBottom: 20, paddingTop: 12 },
+  intelCard: {
+    borderRadius: radii.card,
+    overflow: 'hidden',
+    shadowColor: 'rgba(0,0,0,0.06)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  intelHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+  },
+  intelTitle: { flex: 1, gap: 2 },
+  intelBody: {
+    padding: 16,
+    gap: 16,
+  },
+  intelRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  intelItem: {
+    flex: 1,
+  },
+  intelSection: {
+    gap: 4,
+  },
+  intelProTip: {
+    padding: 12,
+    borderRadius: radii.button,
+    borderWidth: 1,
+    gap: 4,
+  },
 });

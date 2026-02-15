@@ -125,6 +125,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="case/add" options={{ presentation: 'modal' }} />
         <Stack.Screen name="case/[id]" options={{ presentation: 'card' }} />
+        <Stack.Screen name="call-coach" options={{ presentation: 'modal' }} />
         <Stack.Screen name="terms" options={{ presentation: 'modal' }} />
       </Stack>
     </>
