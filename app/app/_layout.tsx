@@ -10,7 +10,7 @@ import {
   Outfit_700Bold,
 } from '@expo-google-fonts/outfit';
 import * as SplashScreen from 'expo-splash-screen';
-import { supabase } from './src/lib/supabase';
+import { supabase } from '../src/lib/supabase';
 import AuthScreen from './auth';
 
 SplashScreen.preventAutoHideAsync();
