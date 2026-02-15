@@ -11,6 +11,19 @@ import { BuddyMascot } from '../../src/components/BuddyMascot';
 import { supabase } from '../../src/lib/supabase';
 import { getInsurerIntel, InsurerIntel } from '../../src/data/insurer-intel';
 
+const PROCEDURE_TYPES = [
+  { value: 'imaging', label: 'Imaging (MRI, CT, X-ray)' },
+  { value: 'surgery', label: 'Surgery' },
+  { value: 'specialty_med', label: 'Specialty Medication' },
+  { value: 'physical_therapy', label: 'Physical Therapy' },
+  { value: 'mental_health', label: 'Mental Health / Therapy' },
+  { value: 'dme', label: 'Medical Equipment (DME)' },
+  { value: 'specialist', label: 'Specialist Visit / Referral' },
+  { value: 'lab_test', label: 'Lab Test / Diagnostic' },
+  { value: 'home_health', label: 'Home Health / Nursing' },
+  { value: 'other', label: 'Other' },
+];
+
 const INSURERS = [
   'UnitedHealthcare', 'Anthem / Elevance', 'Cigna', 'Aetna / CVS Health',
   'Humana', 'Blue Cross Blue Shield', 'Kaiser Permanente', 'Molina Healthcare',
@@ -33,6 +46,7 @@ export default function AddCaseScreen() {
   const [insurerIntel, setInsurerIntel] = useState<InsurerIntel | null>(null);
   const [showIntel, setShowIntel] = useState(false);
   const [form, setForm] = useState({
+    procedureType: '',
     procedureName: '',
     procedureCode: '',
     insurerName: '',
@@ -154,6 +168,24 @@ export default function AddCaseScreen() {
         <BuddyMascot mood="thinking" size={60} />
         <View style={[styles.bubble, { backgroundColor: `${colors.primary}12` }]}>
           <Text style={[typography.body, { color: colors.text }]}>What procedure or treatment was denied (or needs pre-authorization)?</Text>
+        </View>
+      </View>
+
+      <View style={styles.field}>
+        <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: 6 }]}>Type of Procedure</Text>
+        <View style={styles.typeGrid}>
+          {PROCEDURE_TYPES.map(pt => (
+            <Pressable
+              key={pt.value}
+              onPress={() => { Haptics.selectionAsync(); updateField('procedureType', pt.value); }}
+              style={[styles.typeChip, {
+                backgroundColor: form.procedureType === pt.value ? `${colors.primary}20` : colors.surface,
+                borderColor: form.procedureType === pt.value ? colors.primary : colors.tabBarBorder,
+              }]}
+            >
+              <Text style={[typography.caption, { color: form.procedureType === pt.value ? colors.primary : colors.text }]}>{pt.label}</Text>
+            </Pressable>
+          ))}
         </View>
       </View>
 
@@ -416,6 +448,8 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderRadius: radii.button, padding: 14, fontSize: 16 },
   textArea: { minHeight: 80, paddingTop: 14, textAlignVertical: 'top' },
   insurerList: { maxHeight: 220 },
+  typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  typeChip: { borderWidth: 1, borderRadius: radii.button, paddingHorizontal: 12, paddingVertical: 10 },
   insurerChip: { borderWidth: 1, borderRadius: radii.button, padding: 12, marginBottom: 8 },
   urgencyRow: { flexDirection: 'row', gap: 8 },
   urgencyChip: { flex: 1, borderWidth: 1, borderRadius: radii.button, padding: 12 },

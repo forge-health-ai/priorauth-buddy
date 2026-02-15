@@ -12,6 +12,8 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { CaseCard } from '../../src/components/CaseCard';
 import { supabase, Case } from '../../src/lib/supabase';
+import { generateAlerts, BuddyAlert } from '../../src/lib/buddy-alerts';
+import { BuddyAlertCard } from '../../src/components/BuddyAlertCard';
 
 function getGreeting(name?: string): string {
   const hour = new Date().getHours();
@@ -36,6 +38,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [fightScore, setFightScore] = useState(0);
   const [userName, setUserName] = useState<string>('');
+  const [alerts, setAlerts] = useState<BuddyAlert[]>([]);
 
   const fetchCases = useCallback(async () => {
     try {
@@ -67,6 +70,7 @@ export default function HomeScreen() {
 
       const casesData = data || [];
       setCases(casesData);
+      setAlerts(generateAlerts(casesData));
 
       // Calculate fight score based on case activity
       // More active cases, appeals, and escalations = higher score
@@ -172,29 +176,19 @@ export default function HomeScreen() {
           <StatCard label="Won" value={String(wonCount)} color={colors.success} bgColor={colors.surface} />
         </Animated.View>
 
-        {urgentCases.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(300).springify()}>
-            <LinearGradient colors={[`${colors.error}15`, `${colors.error}05`]} style={styles.alertCard}>
-              <Text style={[typography.h3, { color: colors.error }]}>🔥 Deadline Alert</Text>
-              {urgentCases.slice(0, 1).map(c => {
-                const days = getDaysRemaining(c.appeal_deadline);
-                return (
-                  <View key={c.id}>
-                    <Text style={[typography.body, { color: colors.text }]}>
-                      {c.procedure_name} expires in {days === 1 ? '1 day' : `${days} days`}
-                    </Text>
-                    <Text style={[typography.caption, { color: colors.textSecondary }]}>
-                      {c.insurer_name} {c.reference_number ? `- Ref #${c.reference_number}` : ''}
-                    </Text>
-                  </View>
-                );
-              })}
-              {urgentCases.length > 1 && (
-                <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 4 }]}>
-                  +{urgentCases.length - 1} more urgent
-                </Text>
-              )}
-            </LinearGradient>
+        {alerts.length > 0 && (
+          <Animated.View entering={FadeInDown.delay(300).springify()} style={{ gap: 10 }}>
+            <Text style={[typography.h3, { color: colors.text }]}>🛡️ Buddy Alerts</Text>
+            {alerts.slice(0, 3).map((alert, i) => (
+              <Animated.View key={alert.id} entering={FadeInDown.delay(350 + i * 80).springify()}>
+                <BuddyAlertCard alert={alert} />
+              </Animated.View>
+            ))}
+            {alerts.length > 3 && (
+              <Text style={[typography.caption, { color: colors.textSecondary, textAlign: 'center' }]}>
+                +{alerts.length - 3} more alerts
+              </Text>
+            )}
           </Animated.View>
         )}
 

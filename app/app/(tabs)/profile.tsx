@@ -9,7 +9,7 @@ import { BuddyMascot } from '../../src/components/BuddyMascot';
 import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { FORGEButton } from '../../src/components/FORGEButton';
 import { supabase } from '../../src/lib/supabase';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 function SettingRow({ label, value, onPress }: { label: string; value?: string; onPress?: () => void }) {
   const { colors, typography } = useTheme();
@@ -23,6 +23,7 @@ function SettingRow({ label, value, onPress }: { label: string; value?: string; 
 
 export default function ProfileScreen() {
   const { colors, typography } = useTheme();
+  const router = useRouter();
   const [notifications, setNotifications] = useState(true);
   const [userEmail, setUserEmail] = useState<string>('');
   const [stats, setStats] = useState({
@@ -157,6 +158,7 @@ export default function ProfileScreen() {
                 thumbColor={notifications ? colors.primary : colors.textTertiary}
               />
             </View>
+            <SettingRow label="Upgrade to Pro" value="$4.99/mo" onPress={() => router.push('/upgrade')} />
             <SettingRow label="Account" value={userEmail || 'Signed In'} />
             <SettingRow label="Help & Support" />
             <SettingRow label="Privacy Policy" />
