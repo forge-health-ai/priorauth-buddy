@@ -162,9 +162,9 @@ const styles = StyleSheet.create({
   },
   indicator: {
     position: 'absolute',
-    top: 4,
-    height: 46,
-    borderRadius: 16,
+    top: 6,
+    height: 44,
+    borderRadius: 14,
   },
   tab: {
     flex: 1,

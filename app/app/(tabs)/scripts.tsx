@@ -118,7 +118,7 @@ export default function ScriptsScreen() {
       <View style={styles.buddyRow}>
         <BuddyMascot mood="happy" size={60} />
         <View style={[styles.buddyBubble, { backgroundColor: `${colors.primary}14` }]}>
-          <Text style={[typography.body, { color: colors.text }]}>Pick a scenario and I'll coach you through the call! 💪</Text>
+          <Text style={[typography.body, { color: colors.text }]}>Pick a scenario and I'll coach you through the call! 🛡️</Text>
         </View>
       </View>
 

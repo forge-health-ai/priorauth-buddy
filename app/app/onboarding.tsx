@@ -245,7 +245,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingProps) {
             entering={FadeInDown.delay(600).springify()}
             style={[typography.h1, { color: colors.text, textAlign: 'center', marginTop: 32 }]}
           >
-            {name.trim() ? `Let's do this, ${name.trim()}! 💪` : "Let's do this! 💪"}
+            {name.trim() ? `Let's do this, ${name.trim()}! 🛡️` : "Let's do this! 🛡️"}
           </Animated.Text>
 
           <Animated.Text
