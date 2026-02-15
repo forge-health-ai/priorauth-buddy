@@ -122,6 +122,7 @@ export default function CaseDetailScreen() {
           case_id: caseData.id,
           user_id: user.id,
           event_type: 'appeal_generated',
+          title: 'Appeal Letter Generated',
           description: 'AI appeal letter generated and saved',
         });
       }
@@ -191,6 +192,7 @@ export default function CaseDetailScreen() {
           case_id: caseData.id,
           user_id: user.id,
           event_type: 'complaint_filed',
+          title: 'DOI Complaint Filed',
           description: 'DOI complaint generated and filed',
         });
       }
@@ -259,6 +261,7 @@ export default function CaseDetailScreen() {
           case_id: caseData.id,
           user_id: user.id,
           event_type: 'denial_analyzed',
+          title: 'Denial Analysis Complete',
           description: 'AI denial letter analysis completed',
         });
         

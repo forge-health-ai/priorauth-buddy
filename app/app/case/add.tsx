@@ -120,6 +120,7 @@ export default function AddCaseScreen() {
           case_id: caseData.id,
           user_id: user.id,
           event_type: form.denialReason ? 'denial_received' : 'case_created',
+          title: form.denialReason ? 'Denial Received' : 'Case Created',
           description: form.denialReason 
             ? `Denial received: ${form.denialReason.substring(0, 100)}...`
             : 'Case created and tracking started',
