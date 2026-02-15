@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -24,10 +24,12 @@ export default function TermsScreen({ onAccepted }: TermsScreenProps) {
   const router = useRouter();
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleAccept = async () => {
+    setErrorMsg(null);
     if (!accepted) {
-      Alert.alert('Please Accept', 'You must accept the terms to continue.');
+      setErrorMsg('You must accept the terms to continue.');
       return;
     }
 
@@ -47,7 +49,7 @@ export default function TermsScreen({ onAccepted }: TermsScreenProps) {
       
       if (!userId) {
         console.error('No user found — session may be invalid');
-        Alert.alert('Error', 'You must be signed in to accept terms.');
+        setErrorMsg('You must be signed in to accept terms.');
         setLoading(false);
         return;
       }
@@ -62,7 +64,7 @@ export default function TermsScreen({ onAccepted }: TermsScreenProps) {
 
       if (error) {
         console.error('Terms acceptance error:', error);
-        Alert.alert('Error', 'Failed to save your acceptance. Please try again.');
+        setErrorMsg('Failed to save your acceptance. Please try again.');
         setLoading(false);
         return;
       }
@@ -74,7 +76,7 @@ export default function TermsScreen({ onAccepted }: TermsScreenProps) {
       }
     } catch (error) {
       console.error('Terms acceptance error:', error);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      setErrorMsg('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -167,6 +169,11 @@ export default function TermsScreen({ onAccepted }: TermsScreenProps) {
       </ScrollView>
 
       <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.footer}>
+        {errorMsg && (
+          <View style={[styles.errorBanner, { backgroundColor: `${colors.error}15`, borderColor: `${colors.error}40` }]}>
+            <Text style={[typography.body, { color: colors.error }]}>{errorMsg}</Text>
+          </View>
+        )}
         <FORGEButton
           title={loading ? 'Saving...' : 'Get Started'}
           onPress={handleAccept}
@@ -216,4 +223,5 @@ const styles = StyleSheet.create({
   termsList: { marginTop: 8 },
   bulletPoint: { flexDirection: 'row', marginBottom: 8, paddingLeft: 4 },
   footer: { paddingHorizontal: 20, paddingBottom: 20, paddingTop: 12 },
+  errorBanner: { borderWidth: 1, borderRadius: radii.button, padding: 12, marginBottom: 12 },
 });

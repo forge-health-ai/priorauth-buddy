@@ -155,9 +155,15 @@ export default function CaseDetailScreen() {
       // Show complaint inline FIRST
       setComplaintLetter(result.complaint);
 
-      // Save to database (non-blocking)
+      // Save to database (non-blocking) - store in appeals table with document_type = 'complaint'
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        supabase.from('appeals').insert({
+          case_id: caseData.id,
+          user_id: user.id,
+          letter_text: result.complaint,
+          document_type: 'complaint',
+        }).then(() => {});
         supabase.from('cases').update({ status: 'complaint_filed' }).eq('id', caseData.id).then(() => {});
         supabase.from('case_events').insert({
           case_id: caseData.id,

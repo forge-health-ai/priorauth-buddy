@@ -19,6 +19,7 @@ interface SavedAppeal {
   case_id: string;
   procedure_name?: string;
   insurer_name?: string;
+  document_type?: string;
 }
 
 export default function AppealsScreen() {
@@ -37,10 +38,10 @@ export default function AppealsScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch saved appeals
+      // Fetch saved appeals and complaints
       const { data: appeals } = await supabase
         .from('appeals')
-        .select('id, letter_text, created_at, case_id')
+        .select('id, letter_text, created_at, case_id, document_type')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -149,14 +150,16 @@ export default function AppealsScreen() {
           <Pressable onPress={() => { setView('list'); setSelectedAppeal(null); fetchData(); }} hitSlop={20}>
             <Text style={[typography.body, { color: colors.primary }]}>← Back to Appeals</Text>
           </Pressable>
-          <Text style={[typography.h1, { color: colors.text, marginTop: 8 }]}>Appeal Letter</Text>
+          <Text style={[typography.h1, { color: colors.text, marginTop: 8 }]}>
+            {selectedAppeal.document_type === 'complaint' ? 'DOI Complaint' : 'Appeal Letter'}
+          </Text>
           <Text style={[typography.caption, { color: colors.textSecondary }]}>
             {selectedAppeal.procedure_name} · {selectedAppeal.insurer_name}
           </Text>
         </View>
         <ScrollView contentContainerStyle={styles.formContent} showsVerticalScrollIndicator={false}>
           <Animated.View entering={FadeInDown.springify()} style={styles.buddySection}>
-            <BuddyMascot mood="celebrating" size={70} />
+            <BuddyMascot mood={selectedAppeal.document_type === 'complaint' ? 'determined' : 'celebrating'} size={70} />
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(100).springify()}>
@@ -278,9 +281,10 @@ export default function AppealsScreen() {
           <View style={{ gap: 12 }}>
             <Text style={[typography.h3, { color: colors.text }]}>Your Documents</Text>
             {(() => {
-              // Group by case and number them
+              // Group appeals (not complaints) by case and number them
+              const appealsOnly = savedAppeals.filter(a => !a.document_type || a.document_type === 'appeal');
               const caseCount: Record<string, number> = {};
-              const labeled = savedAppeals.map(appeal => {
+              const labeled = appealsOnly.map(appeal => {
                 const key = appeal.case_id;
                 caseCount[key] = (caseCount[key] || 0) + 1;
                 return { ...appeal, appealNum: caseCount[key] };
@@ -288,28 +292,39 @@ export default function AppealsScreen() {
               // Reverse count per case so oldest = 1st
               const caseTotals: Record<string, number> = {};
               labeled.forEach(a => { caseTotals[a.case_id] = Math.max(caseTotals[a.case_id] || 0, a.appealNum); });
-              const numbered = labeled.map(a => ({
+              const numberedAppeals = labeled.map(a => ({
                 ...a,
                 appealNum: caseTotals[a.case_id] - a.appealNum + 1,
               }));
 
-              return numbered.map((appeal, i) => {
-                const ordinal = appeal.appealNum === 1 ? '1st' : appeal.appealNum === 2 ? '2nd' : appeal.appealNum === 3 ? '3rd' : `${appeal.appealNum}th`;
-                const description = appeal.appealNum === 1
-                  ? 'Initial appeal letter to overturn denial'
-                  : `${ordinal} appeal with strengthened arguments`;
+              // Build combined list in original order
+              let appealIdx = 0;
+              const allItems = savedAppeals.map(item => {
+                const isComplaint = item.document_type === 'complaint';
+                if (isComplaint) {
+                  return { ...item, label: 'DOI Complaint', description: 'Department of Insurance complaint letter', mood: 'determined' as const };
+                }
+                const numbered = numberedAppeals[appealIdx++];
+                const ordinal = numbered.appealNum === 1 ? '1st' : numbered.appealNum === 2 ? '2nd' : numbered.appealNum === 3 ? '3rd' : `${numbered.appealNum}th`;
+                return {
+                  ...item,
+                  label: `${ordinal} Appeal`,
+                  description: numbered.appealNum === 1 ? 'Initial appeal letter to overturn denial' : `${ordinal} appeal with strengthened arguments`,
+                  mood: 'celebrating' as const,
+                };
+              });
 
-                return (
+              return allItems.map((appeal, i) => (
                   <Animated.View key={appeal.id} entering={FadeInDown.delay(i * 60).springify()}>
                     <Pressable
                       onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedAppeal(appeal); setView('detail'); }}
                       style={[styles.appealCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
                     >
                       <View style={styles.appealCardHeader}>
-                        <MiniBuddy mood="celebrating" size={28} />
+                        <MiniBuddy mood={appeal.mood} size={28} />
                         <View style={{ flex: 1 }}>
                           <Text style={[typography.body, { color: colors.text, fontFamily: 'Outfit_600SemiBold' }]} numberOfLines={1}>
-                            {appeal.procedure_name} · {ordinal} Appeal
+                            {appeal.procedure_name} · {appeal.label}
                           </Text>
                           <Text style={[typography.caption, { color: colors.textSecondary }]}>
                             {appeal.insurer_name} · {formatDate(appeal.created_at)}
@@ -318,12 +333,11 @@ export default function AppealsScreen() {
                         <Text style={{ color: colors.textTertiary, fontSize: 16 }}>→</Text>
                       </View>
                       <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 6 }]} numberOfLines={1}>
-                        {description}
+                        {appeal.description}
                       </Text>
                     </Pressable>
                   </Animated.View>
-                );
-              });
+              ));
             })()}
           </View>
         )}

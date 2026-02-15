@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -14,73 +14,114 @@ export default function AuthScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'signin' | 'signup'>('signup');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const submittingRef = useRef(false);
 
   const validateEmail = (email: string) => {
     return email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
   };
 
+  const getErrorMessage = (error: any): string => {
+    const msg = error?.message || '';
+    const status = error?.status;
+    if (status === 429 || msg.includes('rate') || msg.includes('429')) {
+      return 'Too many attempts. Please wait a few minutes and try again.';
+    }
+    if (status === 500 || msg.includes('500')) {
+      return 'Server error. Please try again in a moment.';
+    }
+    return msg || 'An unexpected error occurred. Please try again.';
+  };
+
   const handleSignUp = async () => {
+    if (submittingRef.current || loading) return;
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
     if (!email || !password) {
-      Alert.alert('Missing Info', 'Please enter both email and password');
+      setErrorMsg('Please enter both email and password.');
       return;
     }
     if (!validateEmail(email)) {
-      Alert.alert('Invalid Email', 'Please enter a valid email address');
+      setErrorMsg('Please enter a valid email address.');
       return;
     }
     if (password.length < 6) {
-      Alert.alert('Password Too Short', 'Password must be at least 6 characters');
+      setErrorMsg('Password must be at least 6 characters.');
       return;
     }
 
+    submittingRef.current = true;
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password: password.trim(),
-    });
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: password.trim(),
+      });
 
-    if (error) {
+      if (error) {
+        setErrorMsg(getErrorMessage(error));
+        return;
+      }
+
+      // If user exists but session is null, email confirmation is required
+      if (data?.user && !data?.session) {
+        setSuccessMsg('Check your email for a confirmation link to complete sign up.');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        return;
+      }
+
+      // Profile is created automatically by database trigger (handle_new_user)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e: any) {
+      setErrorMsg(getErrorMessage(e));
+    } finally {
       setLoading(false);
-      Alert.alert('Sign Up Error', error.message);
-      return;
+      submittingRef.current = false;
     }
-
-    // Profile is created automatically by database trigger (handle_new_user)
-    // No client-side insert needed - trigger handles it securely
-
-    setLoading(false);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    // Note: Terms screen will be shown automatically by _layout.tsx
   };
 
   const handleSignIn = async () => {
+    if (submittingRef.current || loading) return;
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
     if (!email || !password) {
-      Alert.alert('Missing Info', 'Please enter both email and password');
+      setErrorMsg('Please enter both email and password.');
       return;
     }
 
+    submittingRef.current = true;
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: password.trim(),
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim(),
+      });
 
-    setLoading(false);
+      if (error) {
+        setErrorMsg(getErrorMessage(error));
+        return;
+      }
 
-    if (error) {
-      Alert.alert('Sign In Error', error.message);
-      return;
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e: any) {
+      setErrorMsg(getErrorMessage(e));
+    } finally {
+      setLoading(false);
+      submittingRef.current = false;
     }
-
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
   const toggleMode = () => {
     Haptics.selectionAsync();
+    setErrorMsg(null);
+    setSuccessMsg(null);
     setMode(mode === 'signup' ? 'signin' : 'signup');
   };
 
@@ -97,6 +138,17 @@ export default function AuthScreen() {
           </View>
 
           <View style={styles.form}>
+            {errorMsg && (
+              <View style={[styles.messageBanner, { backgroundColor: `${colors.error}15`, borderColor: `${colors.error}40` }]}>
+                <Text style={[typography.body, { color: colors.error }]}>{errorMsg}</Text>
+              </View>
+            )}
+            {successMsg && (
+              <View style={[styles.messageBanner, { backgroundColor: `${colors.success}15`, borderColor: `${colors.success}40` }]}>
+                <Text style={[typography.body, { color: colors.success }]}>{successMsg}</Text>
+              </View>
+            )}
+
             <View style={styles.field}>
               <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: 6 }]}>Email</Text>
               <TextInput
@@ -104,7 +156,7 @@ export default function AuthScreen() {
                 placeholder="you@example.com"
                 placeholderTextColor={colors.textTertiary}
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(t) => { setEmail(t); setErrorMsg(null); }}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 autoComplete="email"
@@ -118,7 +170,7 @@ export default function AuthScreen() {
                 placeholder="At least 6 characters"
                 placeholderTextColor={colors.textTertiary}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(t) => { setPassword(t); setErrorMsg(null); }}
                 secureTextEntry
                 autoComplete={mode === 'signup' ? 'new-password' : 'password'}
               />
@@ -130,12 +182,14 @@ export default function AuthScreen() {
                   title="Sign Up"
                   onPress={handleSignUp}
                   loading={loading}
+                  disabled={loading}
                 />
               ) : (
                 <FORGEButton
                   title="Sign In"
                   onPress={handleSignIn}
                   loading={loading}
+                  disabled={loading}
                 />
               )}
             </View>
@@ -166,4 +220,5 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderRadius: radii.button, padding: 14, fontSize: 16 },
   buttonRow: { marginTop: 8 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8 },
+  messageBanner: { borderWidth: 1, borderRadius: radii.button, padding: 12 },
 });

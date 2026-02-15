@@ -31,29 +31,61 @@ export default function RootLayout() {
     Outfit_700Bold,
   });
 
+  // Get user ID with getSession fallback (getUser can 403)
+  const getUserId = async (): Promise<string | null> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) return user.id;
+    } catch (e) {
+      console.warn('getUser failed, falling back to getSession:', e);
+    }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.user?.id || null;
+    } catch (e) {
+      console.error('getSession also failed:', e);
+      return null;
+    }
+  };
+
   // Check if user needs to accept terms
   const checkTermsAcceptance = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('terms_accepted_at, display_name')
-        .eq('id', userId)
-        .single();
+    const maxRetries = 3;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('terms_accepted_at, display_name')
+          .eq('id', userId)
+          .single();
 
-      if (error && error.code !== 'PGRST116') {
-        // PGRST116 = no rows returned, which means new user
-        console.error('Terms check error:', error);
+        if (error && error.code === 'PGRST116') {
+          // No profile row yet — trigger may still be creating it
+          if (attempt < maxRetries - 1) {
+            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+            continue;
+          }
+          // After retries, treat as new user needing terms
+          setNeedsTerms(true);
+          setNeedsOnboarding(true);
+          return;
+        }
+
+        if (error) {
+          console.error('Terms check error:', error);
+          setNeedsTerms(true);
+          return;
+        }
+
+        setNeedsTerms(!data?.terms_accepted_at);
+        setNeedsOnboarding(!data?.display_name);
         return;
+      } catch (error) {
+        console.error('Error checking terms:', error);
+        if (attempt === maxRetries - 1) {
+          setNeedsTerms(true);
+        }
       }
-
-      // User needs to accept terms if terms_accepted_at is null
-      setNeedsTerms(!data?.terms_accepted_at);
-      // User needs onboarding if they haven't set a display name yet
-      setNeedsOnboarding(!data?.display_name);
-    } catch (error) {
-      console.error('Error checking terms:', error);
-      // Default to requiring terms on error (safe default)
-      setNeedsTerms(true);
     }
   };
 
