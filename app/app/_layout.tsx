@@ -35,6 +35,7 @@ export default function RootLayout() {
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="case/add" options={{ presentation: 'modal' }} />
       </Stack>
     </>
   );

@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTheme, radii, springs } from '../../src/theme';
+import { useRouter } from 'expo-router';
 import { CaseCard } from '../../src/components/CaseCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { MiniBuddy } from '../../src/components/MiniBuddy';
@@ -29,16 +30,9 @@ function FAB({ onPress }: { onPress: () => void }) {
   );
 }
 
-function addCase() {
-  Alert.alert(
-    'Coming Soon',
-    'Case tracking will be available in the next update. You\'ll be able to track prior authorizations, deadlines and outcomes.',
-    [{ text: 'Got it' }]
-  );
-}
-
 export default function CasesScreen() {
   const { colors, typography } = useTheme();
+  const router = useRouter();
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -54,7 +48,7 @@ export default function CasesScreen() {
         title="No cases yet"
         subtitle="Track your prior authorizations and never miss a deadline. Tap + to get started."
       />
-      <FAB onPress={addCase} />
+      <FAB onPress={() => router.push('/case/add')} />
     </SafeAreaView>
   );
 }
