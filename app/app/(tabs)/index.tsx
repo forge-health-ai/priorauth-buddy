@@ -13,11 +13,10 @@ import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { CaseCard } from '../../src/components/CaseCard';
 import { supabase, Case } from '../../src/lib/supabase';
 
-function getGreeting(): string {
+function getGreeting(name?: string): string {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
+  const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  return name ? `${timeGreeting}, ${name}` : timeGreeting;
 }
 
 function StatCard({ label, value, color, bgColor }: { label: string; value: string; color: string; bgColor: string }) {
@@ -36,6 +35,7 @@ export default function HomeScreen() {
   const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(true);
   const [fightScore, setFightScore] = useState(0);
+  const [userName, setUserName] = useState<string>('');
 
   const fetchCases = useCallback(async () => {
     try {
@@ -45,6 +45,14 @@ export default function HomeScreen() {
         setLoading(false);
         return;
       }
+
+      // Fetch user's display name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .single();
+      if (profile?.display_name) setUserName(profile.display_name);
 
       const { data, error } = await supabase
         .from('cases')
@@ -128,7 +136,7 @@ export default function HomeScreen() {
         <Animated.View entering={FadeInDown.delay(50).springify()} style={styles.centeredHeader}>
           <MiniBuddy mood="happy" size={32} />
           <Text style={[typography.h1, { color: colors.text, textAlign: 'center' }]}>PriorAuth Buddy</Text>
-          <Text style={[typography.body, { color: colors.textSecondary, textAlign: 'center' }]}>{getGreeting()}</Text>
+          <Text style={[typography.body, { color: colors.textSecondary, textAlign: 'center' }]}>{getGreeting(userName)}</Text>
         </Animated.View>
         <EmptyState
           mood="happy"
@@ -147,7 +155,7 @@ export default function HomeScreen() {
         <View style={styles.centeredHeader}>
           <MiniBuddy mood="happy" size={32} />
           <Text style={[typography.h1, { color: colors.text, textAlign: 'center' }]}>PriorAuth Buddy</Text>
-          <Text style={[typography.body, { color: colors.textSecondary, textAlign: 'center' }]}>{getGreeting()}</Text>
+          <Text style={[typography.body, { color: colors.textSecondary, textAlign: 'center' }]}>{getGreeting(userName)}</Text>
         </View>
 
         <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.buddySection}>
