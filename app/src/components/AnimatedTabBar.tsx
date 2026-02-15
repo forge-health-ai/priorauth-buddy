@@ -74,8 +74,9 @@ export function AnimatedTabBar({ state, descriptors, navigation }: any) {
   React.useEffect(() => {
     const layout = tabLayouts.current[state.index];
     if (layout) {
-      indicatorX.value = withSpring(layout.x, springs.tab);
-      tabWidth.value = withSpring(layout.width, springs.tab);
+      const padding = 10;
+      indicatorX.value = withSpring(layout.x + padding, springs.tab);
+      tabWidth.value = withSpring(layout.width - padding * 2, springs.tab);
     }
   }, [state.index]);
 
@@ -101,8 +102,9 @@ export function AnimatedTabBar({ state, descriptors, navigation }: any) {
             onLayout={(x: number, w: number) => {
               tabLayouts.current[index] = { x, width: w };
               if (isFocused) {
-                indicatorX.value = withSpring(x, springs.tab);
-                tabWidth.value = withSpring(w, springs.tab);
+                const padding = 10;
+                indicatorX.value = withSpring(x + padding, springs.tab);
+                tabWidth.value = withSpring(w - padding * 2, springs.tab);
               }
             }}
             indicatorX={indicatorX}
@@ -161,8 +163,8 @@ const styles = StyleSheet.create({
   indicator: {
     position: 'absolute',
     top: 4,
-    height: 48,
-    borderRadius: radii.card,
+    height: 46,
+    borderRadius: 16,
   },
   tab: {
     flex: 1,
