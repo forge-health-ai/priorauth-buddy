@@ -59,13 +59,14 @@ function ScriptCard({ script, isExpanded, onToggle }: { script: typeof SCRIPTS[0
   const { colors, typography } = useTheme();
 
   return (
-    <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onToggle(); }}>
-      <View style={[styles.scriptCard, { backgroundColor: colors.surface }]}>
+    <View style={[styles.scriptCard, { backgroundColor: colors.surface }]}>
+      <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onToggle(); }}>
         <View style={styles.scriptHeader}>
           <MiniBuddy mood={script.buddyMood} size={36} />
           <Text style={[typography.h3, { color: colors.text, flex: 1 }]}>{script.scenario}</Text>
           <Text style={{ color: colors.textTertiary, fontSize: 18 }}>{isExpanded ? '▲' : '▼'}</Text>
         </View>
+      </Pressable>
 
         {isExpanded && (
           <Animated.View entering={FadeInDown.duration(200)}>
@@ -95,8 +96,7 @@ function ScriptCard({ script, isExpanded, onToggle }: { script: typeof SCRIPTS[0
             ))}
           </Animated.View>
         )}
-      </View>
-    </Pressable>
+    </View>
   );
 }
 
