@@ -277,30 +277,54 @@ export default function AppealsScreen() {
         ) : (
           <View style={{ gap: 12 }}>
             <Text style={[typography.h3, { color: colors.text }]}>Your Documents</Text>
-            {savedAppeals.map((appeal, i) => (
-              <Animated.View key={appeal.id} entering={FadeInDown.delay(i * 60).springify()}>
-                <Pressable
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedAppeal(appeal); setView('detail'); }}
-                  style={[styles.appealCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                >
-                  <View style={styles.appealCardHeader}>
-                    <MiniBuddy mood="celebrating" size={28} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[typography.body, { color: colors.text, fontFamily: 'Outfit_600SemiBold' }]} numberOfLines={1}>
-                        {appeal.procedure_name}
+            {(() => {
+              // Group by case and number them
+              const caseCount: Record<string, number> = {};
+              const labeled = savedAppeals.map(appeal => {
+                const key = appeal.case_id;
+                caseCount[key] = (caseCount[key] || 0) + 1;
+                return { ...appeal, appealNum: caseCount[key] };
+              });
+              // Reverse count per case so oldest = 1st
+              const caseTotals: Record<string, number> = {};
+              labeled.forEach(a => { caseTotals[a.case_id] = Math.max(caseTotals[a.case_id] || 0, a.appealNum); });
+              const numbered = labeled.map(a => ({
+                ...a,
+                appealNum: caseTotals[a.case_id] - a.appealNum + 1,
+              }));
+
+              return numbered.map((appeal, i) => {
+                const ordinal = appeal.appealNum === 1 ? '1st' : appeal.appealNum === 2 ? '2nd' : appeal.appealNum === 3 ? '3rd' : `${appeal.appealNum}th`;
+                const description = appeal.appealNum === 1
+                  ? 'Initial appeal letter to overturn denial'
+                  : `${ordinal} appeal with strengthened arguments`;
+
+                return (
+                  <Animated.View key={appeal.id} entering={FadeInDown.delay(i * 60).springify()}>
+                    <Pressable
+                      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedAppeal(appeal); setView('detail'); }}
+                      style={[styles.appealCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                    >
+                      <View style={styles.appealCardHeader}>
+                        <MiniBuddy mood="celebrating" size={28} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={[typography.body, { color: colors.text, fontFamily: 'Outfit_600SemiBold' }]} numberOfLines={1}>
+                            {appeal.procedure_name} · {ordinal} Appeal
+                          </Text>
+                          <Text style={[typography.caption, { color: colors.textSecondary }]}>
+                            {appeal.insurer_name} · {formatDate(appeal.created_at)}
+                          </Text>
+                        </View>
+                        <Text style={{ color: colors.textTertiary, fontSize: 16 }}>→</Text>
+                      </View>
+                      <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 6 }]} numberOfLines={1}>
+                        {description}
                       </Text>
-                      <Text style={[typography.caption, { color: colors.textSecondary }]}>
-                        {appeal.insurer_name} · {formatDate(appeal.created_at)}
-                      </Text>
-                    </View>
-                    <Text style={{ color: colors.textTertiary, fontSize: 16 }}>→</Text>
-                  </View>
-                  <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 8 }]} numberOfLines={2}>
-                    {appeal.letter_text.substring(0, 120)}...
-                  </Text>
-                </Pressable>
-              </Animated.View>
-            ))}
+                    </Pressable>
+                  </Animated.View>
+                );
+              });
+            })()}
           </View>
         )}
       </ScrollView>
