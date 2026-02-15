@@ -1,7 +1,7 @@
 export const typography = {
   display: {
     fontFamily: 'Outfit_700Bold',
-    fontSize: 32,
+    fontSize: 48,
     letterSpacing: -0.5,
   },
   h1: {
