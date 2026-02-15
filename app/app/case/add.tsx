@@ -8,6 +8,7 @@ import { useTheme, radii } from '../../src/theme';
 import { FORGEButton } from '../../src/components/FORGEButton';
 import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
+import { supabase } from '../../src/lib/supabase';
 
 const INSURERS = [
   'UnitedHealthcare', 'Anthem / Elevance', 'Cigna', 'Aetna / CVS Health',
@@ -27,6 +28,7 @@ export default function AddCaseScreen() {
   const { colors, typography } = useTheme();
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     procedureName: '',
     procedureCode: '',
@@ -51,14 +53,77 @@ export default function AddCaseScreen() {
     return true;
   };
 
-  const handleSubmit = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    // TODO: Save to Supabase when connected
-    Alert.alert(
-      'Case Added!',
-      `Tracking "${form.procedureName}" with ${form.insurerName}. Buddy will watch your deadlines.`,
-      [{ text: 'Let\'s go!', onPress: () => router.back() }]
-    );
+  const handleSubmit = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSaving(true);
+
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        Alert.alert('Error', 'You must be signed in to add a case');
+        setSaving(false);
+        return;
+      }
+
+      // Calculate appeal deadline (typically 180 days from denial or 60 days for some plans)
+      const appealDeadline = new Date();
+      appealDeadline.setDate(appealDeadline.getDate() + 60); // 60 days from now as default
+
+      // Insert case into database
+      const { data: caseData, error: caseError } = await supabase
+        .from('cases')
+        .insert({
+          user_id: user.id,
+          procedure_name: form.procedureName,
+          procedure_code: form.procedureCode || null,
+          insurer_name: form.insurerName,
+          policy_number: form.policyNumber || null,
+          reference_number: form.referenceNumber || null,
+          provider_name: form.providerName || null,
+          status: form.denialReason ? 'denied' : 'pending',
+          denial_reason: form.denialReason || null,
+          denial_date: form.denialDate || null,
+          appeal_deadline: form.denialReason ? appealDeadline.toISOString() : null,
+          urgency: form.urgency,
+          notes: form.notes || null,
+          fight_score: 0,
+        })
+        .select()
+        .single();
+
+      if (caseError) {
+        console.error('Case insert error:', caseError);
+        Alert.alert('Error', 'Failed to save case. Please try again.');
+        setSaving(false);
+        return;
+      }
+
+      // Create initial case event
+      await supabase
+        .from('case_events')
+        .insert({
+          case_id: caseData.id,
+          user_id: user.id,
+          event_type: form.denialReason ? 'denial_received' : 'case_created',
+          description: form.denialReason 
+            ? `Denial received: ${form.denialReason.substring(0, 100)}...`
+            : 'Case created and tracking started',
+        });
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        'Case Added!',
+        `Tracking "${form.procedureName}" with ${form.insurerName}. Buddy will watch your deadlines.`,
+        [{ text: 'Let\'s go!', onPress: () => router.back() }]
+      );
+    } catch (error) {
+      console.error('Submit error:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const renderStepIndicator = () => (
@@ -248,7 +313,7 @@ export default function AddCaseScreen() {
               disabled={!canProceed()}
             />
           ) : (
-            <FORGEButton title="Add Case" onPress={handleSubmit} />
+            <FORGEButton title="Add Case" onPress={handleSubmit} loading={saving} />
           )}
         </View>
       </KeyboardAvoidingView>

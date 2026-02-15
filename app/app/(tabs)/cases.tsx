@@ -1,14 +1,15 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTheme, radii, springs } from '../../src/theme';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { CaseCard } from '../../src/components/CaseCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { MiniBuddy } from '../../src/components/MiniBuddy';
+import { supabase, Case } from '../../src/lib/supabase';
 
 function FAB({ onPress }: { onPress: () => void }) {
   const { colors } = useTheme();
@@ -33,6 +34,75 @@ function FAB({ onPress }: { onPress: () => void }) {
 export default function CasesScreen() {
   const { colors, typography } = useTheme();
   const router = useRouter();
+  const [cases, setCases] = useState<Case[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchCases = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('cases')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Fetch cases error:', error);
+        return;
+      }
+
+      setCases(data || []);
+    } catch (error) {
+      console.error('Error fetching cases:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Fetch on mount and when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchCases();
+    }, [])
+  );
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchCases();
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const getDaysRemaining = (deadlineString?: string) => {
+    if (!deadlineString) return undefined;
+    const deadline = new Date(deadlineString);
+    const now = new Date();
+    const diffTime = deadline.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  const getCaseStatus = (status: string): any => {
+    // Map DB status to CaseCard status
+    const statusMap: Record<string, any> = {
+      'pending': 'pending',
+      'approved': 'approved',
+      'denied': 'denied',
+      'appealing': 'appealing',
+      'appeal_won': 'appeal_approved',
+      'appeal_denied': 'appeal_denied',
+      'escalated': 'appealing',
+      'complaint_filed': 'appealing',
+    };
+    return statusMap[status] || 'pending';
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -43,11 +113,40 @@ export default function CasesScreen() {
         </View>
         <Text style={[typography.h1, { color: colors.text }]}>Cases</Text>
       </View>
-      <EmptyState
-        mood="confused"
-        title="No cases yet"
-        subtitle="Track your prior authorizations and never miss a deadline. Tap + to get started."
-      />
+
+      {cases.length === 0 && !loading ? (
+        <EmptyState
+          mood="confused"
+          title="No cases yet"
+          subtitle="Track your prior authorizations and never miss a deadline. Tap + to get started."
+        />
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          }
+        >
+          {cases.map((caseItem, index) => (
+            <Animated.View
+              key={caseItem.id}
+              entering={FadeInDown.delay(index * 50).springify()}
+              style={styles.caseCardWrapper}
+            >
+              <CaseCard
+                procedureName={caseItem.procedure_name}
+                insuranceCompany={caseItem.insurer_name || 'Unknown Insurer'}
+                status={getCaseStatus(caseItem.status)}
+                daysRemaining={getDaysRemaining(caseItem.appeal_deadline)}
+                dateSubmitted={formatDate(caseItem.created_at)}
+                onPress={() => router.push(`/case/${caseItem.id}`)}
+              />
+            </Animated.View>
+          ))}
+        </ScrollView>
+      )}
+
       <FAB onPress={() => router.push('/case/add')} />
     </SafeAreaView>
   );
@@ -57,6 +156,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8, gap: 2 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 100, gap: 12 },
+  caseCardWrapper: { marginBottom: 12 },
   fab: { position: 'absolute', bottom: 100, right: 20 },
   fabGradient: {
     width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center',

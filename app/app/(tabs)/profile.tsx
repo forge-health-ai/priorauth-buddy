@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch, Pressable } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Switch, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -7,6 +7,9 @@ import * as Haptics from 'expo-haptics';
 import { useTheme, radii } from '../../src/theme';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
 import { MiniBuddy } from '../../src/components/MiniBuddy';
+import { FORGEButton } from '../../src/components/FORGEButton';
+import { supabase } from '../../src/lib/supabase';
+import { useFocusEffect } from 'expo-router';
 
 function SettingRow({ label, value, onPress }: { label: string; value?: string; onPress?: () => void }) {
   const { colors, typography } = useTheme();
@@ -21,6 +24,83 @@ function SettingRow({ label, value, onPress }: { label: string; value?: string; 
 export default function ProfileScreen() {
   const { colors, typography } = useTheme();
   const [notifications, setNotifications] = useState(true);
+  const [userEmail, setUserEmail] = useState<string>('');
+  const [stats, setStats] = useState({
+    cases: 0,
+    appeals: 0,
+    calls: 0,
+    wins: 0,
+  });
+
+  const fetchUserData = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserEmail(user.email || '');
+
+        // Fetch cases count
+        const { count: casesCount } = await supabase
+          .from('cases')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        // Fetch appeals count
+        const { count: appealsCount } = await supabase
+          .from('appeals')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        // Fetch call logs count
+        const { count: callsCount } = await supabase
+          .from('call_logs')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        // Fetch wins (appeal_won or approved status)
+        const { count: winsCount } = await supabase
+          .from('cases')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .in('status', ['appeal_won', 'approved']);
+
+        setStats({
+          cases: casesCount || 0,
+          appeals: appealsCount || 0,
+          calls: callsCount || 0,
+          wins: winsCount || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserData();
+    }, [fetchUserData])
+  );
+
+  const handleSignOut = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+              Alert.alert('Error', error.message);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -39,7 +119,7 @@ export default function ProfileScreen() {
               <View style={styles.proContent}>
                 <BuddyMascot mood="celebrating" size={70} />
                 <View style={{ flex: 1 }}>
-                  <Text style={[typography.h2, { color: '#FFFFFF' }]}>Go Pro 👑</Text>
+                  <Text style={[typography.h2, { color: '#FFFFFF' }]}>Go Pro</Text>
                   <Text style={[typography.body, { color: 'rgba(255,255,255,0.8)' }]}>Unlimited cases, appeals, and priority support</Text>
                   <Text style={[typography.h3, { color: '#FFB800', marginTop: 4 }]}>$4.99/month</Text>
                 </View>
@@ -52,10 +132,10 @@ export default function ProfileScreen() {
           <Text style={[typography.h3, { color: colors.textSecondary, marginBottom: 12 }]}>YOUR STATS</Text>
           <View style={styles.statsGrid}>
             {[
-              { label: 'Cases Tracked', value: '0', color: colors.primary },
-              { label: 'Appeals Written', value: '0', color: colors.accent },
-              { label: 'Calls Logged', value: '0', color: colors.secondary },
-              { label: 'Wins', value: '0', color: colors.success },
+              { label: 'Cases Tracked', value: String(stats.cases), color: colors.primary },
+              { label: 'Appeals Written', value: String(stats.appeals), color: colors.accent },
+              { label: 'Calls Logged', value: String(stats.calls), color: colors.secondary },
+              { label: 'Wins', value: String(stats.wins), color: colors.success },
             ].map((stat, i) => (
               <View key={i} style={[styles.statBox, { backgroundColor: colors.surface }]}>
                 <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 24, color: stat.color }}>{stat.value}</Text>
@@ -77,17 +157,21 @@ export default function ProfileScreen() {
                 thumbColor={notifications ? colors.primary : colors.textTertiary}
               />
             </View>
-            <SettingRow label="Account" value="Sign In" />
+            <SettingRow label="Account" value={userEmail || 'Signed In'} />
             <SettingRow label="Help & Support" />
             <SettingRow label="Privacy Policy" />
             <SettingRow label="Terms of Service" />
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.footer}>
+        <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.signOutSection}>
+          <FORGEButton title="Sign Out" onPress={handleSignOut} variant="ghost" />
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.footer}>
           <Text style={[typography.caption, { color: colors.textTertiary, textAlign: 'center' }]}>PriorAuth Buddy v1.0.0</Text>
           <Text style={[typography.caption, { color: colors.textTertiary, textAlign: 'center' }]}>A FORGE Labs Product</Text>
-          <Text style={[typography.caption, { color: colors.textTertiary, textAlign: 'center' }]}>© 2026 Forge Partners Inc.</Text>
+          <Text style={[typography.caption, { color: colors.textTertiary, textAlign: 'center' }]}>2026 Forge Partners Inc.</Text>
         </Animated.View>
       </ScrollView>
     </SafeAreaView>
@@ -108,5 +192,6 @@ const styles = StyleSheet.create({
   },
   settingsCard: { borderRadius: radii.card, overflow: 'hidden' },
   settingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth },
+  signOutSection: { marginTop: 24 },
   footer: { marginTop: 32, gap: 4, paddingBottom: 20 },
 });
