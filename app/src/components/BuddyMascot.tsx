@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Pressable } from 'react-native';
 import Svg, { Path, Circle, Ellipse, G } from 'react-native-svg';
 import Animated, {
@@ -8,6 +8,7 @@ import Animated, {
   withSequence,
   withSpring,
   withTiming,
+  withDelay,
   Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -26,6 +27,22 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress }: BuddyMascot
   const floatY = useSharedValue(0);
   const breathScale = useSharedValue(1);
   const tapScale = useSharedValue(1);
+  const [isBlinking, setIsBlinking] = useState(false);
+
+  // Blink every 3-5 seconds (randomized for natural feel)
+  useEffect(() => {
+    if (mood === 'sleeping' || mood === 'celebrating') return; // these moods have closed eyes already
+    const scheduleBlink = () => {
+      const delay = 2500 + Math.random() * 3000; // 2.5-5.5s
+      return setTimeout(() => {
+        setIsBlinking(true);
+        setTimeout(() => setIsBlinking(false), 150); // blink duration
+        timerRef = scheduleBlink();
+      }, delay);
+    };
+    let timerRef = scheduleBlink();
+    return () => clearTimeout(timerRef);
+  }, [mood]);
 
   useEffect(() => {
     floatY.value = withRepeat(
@@ -71,6 +88,16 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress }: BuddyMascot
   const pr = size * 0.025;
 
   const getEyes = () => {
+    // Blink: show closed eyes regardless of mood
+    if (isBlinking) {
+      return (
+        <G>
+          <Path d={`M${cx1 - r * 1.5} ${cy} Q${cx1} ${cy - r} ${cx1 + r * 1.5} ${cy}`} stroke={eyeColor} strokeWidth={2} fill="none" />
+          <Path d={`M${cx2 - r * 1.5} ${cy} Q${cx2} ${cy - r} ${cx2 + r * 1.5} ${cy}`} stroke={eyeColor} strokeWidth={2} fill="none" />
+        </G>
+      );
+    }
+
     switch (mood) {
       case 'sleeping':
         return (
