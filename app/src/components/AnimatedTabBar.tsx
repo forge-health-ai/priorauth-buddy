@@ -162,8 +162,8 @@ const styles = StyleSheet.create({
   },
   indicator: {
     position: 'absolute',
-    top: 6,
-    height: 44,
+    top: 4,
+    height: 50,
     borderRadius: 14,
   },
   tab: {
