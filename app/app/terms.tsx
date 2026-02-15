@@ -35,9 +35,18 @@ export default function TermsScreen({ onAccepted }: TermsScreenProps) {
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Try getUser first, fall back to getSession (getUser can 403 on some configs)
+      let userId: string | null = null;
+      const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+      if (user) {
+        userId = user.id;
+      } else {
+        const { data: { session } } = await supabase.auth.getSession();
+        userId = session?.user?.id || null;
+      }
       
-      if (!user) {
+      if (!userId) {
+        console.error('No user found — session may be invalid');
         Alert.alert('Error', 'You must be signed in to accept terms.');
         setLoading(false);
         return;
@@ -47,7 +56,7 @@ export default function TermsScreen({ onAccepted }: TermsScreenProps) {
       const { error } = await supabase
         .from('profiles')
         .upsert({
-          id: user.id,
+          id: userId,
           terms_accepted_at: new Date().toISOString(),
         }, { onConflict: 'id' });
 
