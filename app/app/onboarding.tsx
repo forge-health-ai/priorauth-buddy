@@ -59,20 +59,36 @@ export default function OnboardingScreen({ onComplete }: OnboardingProps) {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const saveName = async () => {
     if (name.trim()) {
       setSaving(true);
+      setErrorMsg(null);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await supabase
+        // Try getUser first, fall back to getSession
+        let userId: string | null = null;
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          userId = user?.id || null;
+        } catch (_) {}
+        if (!userId) {
+          const { data: { session } } = await supabase.auth.getSession();
+          userId = session?.user?.id || null;
+        }
+        if (userId) {
+          const { error } = await supabase
             .from('profiles')
             .update({ display_name: name.trim() })
-            .eq('id', user.id);
+            .eq('id', userId);
+          if (error) {
+            console.error('Name save error:', error);
+            setErrorMsg('Could not save your name. You can update it later in settings.');
+          }
         }
       } catch (e) {
-        // Non-blocking, name is nice-to-have
+        console.error('Name save error:', e);
+        setErrorMsg('Could not save your name. You can update it later in settings.');
       }
       setSaving(false);
     }
@@ -213,6 +229,12 @@ export default function OnboardingScreen({ onComplete }: OnboardingProps) {
             />
           </Animated.View>
 
+          {errorMsg && (
+            <Animated.View entering={FadeInDown} style={[styles.errorBanner, { backgroundColor: '#FF3B5C15', borderColor: '#FF3B5C40' }]}>
+              <Text style={[typography.body, { color: '#FF3B5C' }]}>{errorMsg}</Text>
+            </Animated.View>
+          )}
+
           <Animated.View entering={FadeInDown.delay(1000).springify()} style={styles.buttonContainer}>
             <FORGEButton
               title={name.trim() ? `Let's go, ${name.trim()}!` : "Let's go!"}
@@ -330,6 +352,13 @@ const styles = StyleSheet.create({
   dot: {
     height: 8,
     borderRadius: 4,
+  },
+  errorBanner: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 16,
+    width: '80%',
   },
   confettiParticle: {
     position: 'absolute',
