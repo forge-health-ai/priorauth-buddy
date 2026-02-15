@@ -43,6 +43,8 @@ export default function CaseDetailScreen() {
   const [showAnalyzer, setShowAnalyzer] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<DenialAnalysis | null>(null);
+  const [appealLetter, setAppealLetter] = useState<string | null>(null);
+  const [complaintLetter, setComplaintLetter] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCaseDetails();
@@ -127,29 +129,8 @@ export default function CaseDetailScreen() {
         });
       }
 
-      // Show appeal letter
-      Alert.alert(
-        'Appeal Letter Ready!',
-        'Your appeal letter has been generated. Would you like to copy or share it?',
-        [
-          { text: 'Close', style: 'cancel' },
-          { 
-            text: 'Copy', 
-            onPress: async () => {
-              await Share.share({ message: result.letter });
-            }
-          },
-          {
-            text: 'Share',
-            onPress: async () => {
-              await Share.share({
-                title: 'Appeal Letter',
-                message: result.letter,
-              });
-            }
-          }
-        ]
-      );
+      // Show appeal letter inline
+      setAppealLetter(result.letter);
     } catch (error) {
       console.error('Appeal generation error:', error);
       Alert.alert('Error', 'Failed to generate appeal letter. Please try again.');
@@ -197,22 +178,7 @@ export default function CaseDetailScreen() {
         });
       }
 
-      Alert.alert(
-        'Complaint Generated!',
-        'Your Department of Insurance complaint has been created.',
-        [
-          { text: 'Close', style: 'cancel' },
-          {
-            text: 'Share',
-            onPress: async () => {
-              await Share.share({
-                title: 'DOI Complaint',
-                message: result.complaint,
-              });
-            }
-          }
-        ]
-      );
+            setComplaintLetter(result.complaint);
     } catch (error) {
       console.error('Complaint generation error:', error);
       Alert.alert('Error', 'Failed to generate complaint. Please try again.');
@@ -415,6 +381,42 @@ export default function CaseDetailScreen() {
           </View>
         </Animated.View>
 
+        {appealLetter && (
+          <Animated.View entering={FadeInDown.springify()} style={[styles.letterSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={styles.letterHeader}>
+              <BuddyMascot mood="celebrating" size={40} />
+              <Text style={[typography.h3, { color: colors.text, flex: 1 }]}>Your Appeal Letter</Text>
+              <Pressable onPress={() => setAppealLetter(null)} hitSlop={20}>
+                <Text style={[typography.body, { color: colors.textTertiary }]}>✕</Text>
+              </Pressable>
+            </View>
+            <ScrollView style={styles.letterContent} nestedScrollEnabled>
+              <Text style={[typography.body, { color: colors.text }]} selectable>{appealLetter}</Text>
+            </ScrollView>
+            <View style={styles.letterActions}>
+              <FORGEButton title="Copy / Share" onPress={() => Share.share({ title: 'Appeal Letter', message: appealLetter })} variant="secondary" />
+            </View>
+          </Animated.View>
+        )}
+
+        {complaintLetter && (
+          <Animated.View entering={FadeInDown.springify()} style={[styles.letterSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={styles.letterHeader}>
+              <BuddyMascot mood="determined" size={40} />
+              <Text style={[typography.h3, { color: colors.text, flex: 1 }]}>DOI Complaint</Text>
+              <Pressable onPress={() => setComplaintLetter(null)} hitSlop={20}>
+                <Text style={[typography.body, { color: colors.textTertiary }]}>✕</Text>
+              </Pressable>
+            </View>
+            <ScrollView style={styles.letterContent} nestedScrollEnabled>
+              <Text style={[typography.body, { color: colors.text }]} selectable>{complaintLetter}</Text>
+            </ScrollView>
+            <View style={styles.letterActions}>
+              <FORGEButton title="Copy / Share" onPress={() => Share.share({ title: 'DOI Complaint', message: complaintLetter })} variant="secondary" />
+            </View>
+          </Animated.View>
+        )}
+
         {caseData.denial_reason && (
           <Animated.View entering={FadeInDown.delay(250).springify()} style={styles.analyzerSection}>
             <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowAnalyzer(!showAnalyzer); }}>
@@ -595,4 +597,8 @@ const styles = StyleSheet.create({
   timelineDot: { width: 10, height: 10, borderRadius: 5, marginTop: 4 },
   timelineContent: { flex: 1, gap: 2 },
   timelineLine: { position: 'absolute', left: 4, top: 22, width: 2, height: 40 },
+  letterSection: { marginHorizontal: 20, marginBottom: 16, borderRadius: 16, borderWidth: 1, padding: 16, gap: 12 },
+  letterHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  letterContent: { maxHeight: 300 },
+  letterActions: { flexDirection: 'row', gap: 8 },
 });
