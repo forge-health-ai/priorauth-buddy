@@ -10,6 +10,7 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { supabase, Case } from '../../src/lib/supabase';
 import { generateAppealLetter } from '../../src/lib/ai';
+import { emailLetterToSelf } from '../../src/lib/email-letter';
 import { useFocusEffect } from 'expo-router';
 
 interface SavedAppeal {
@@ -171,7 +172,8 @@ export default function AppealsScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.buttonRow}>
-            <FORGEButton title="Copy / Share" onPress={() => Share.share({ title: 'Appeal Letter', message: selectedAppeal.letter_text })} />
+            <FORGEButton title="Email to Myself" onPress={() => emailLetterToSelf(`Appeal Letter - ${selectedAppeal.procedure_name}`, selectedAppeal.letter_text)} />
+            <FORGEButton title="Copy / Share" onPress={() => Share.share({ title: 'Appeal Letter', message: selectedAppeal.letter_text })} variant="secondary" />
             <FORGEButton title="New Appeal" onPress={() => { setView('form'); setSelectedAppeal(null); setSelectedCaseId(''); setAdditionalContext(''); }} variant="secondary" />
           </Animated.View>
         </ScrollView>

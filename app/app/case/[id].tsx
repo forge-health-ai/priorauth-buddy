@@ -11,6 +11,8 @@ import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
 import { supabase, Case } from '../../src/lib/supabase';
 import { generateAppealLetter, generateDOIComplaint, analyzeDenialLetter, DenialAnalysis } from '../../src/lib/ai';
+import { emailLetterToSelf } from '../../src/lib/email-letter';
+import { submitAnonymousOutcome } from '../../src/lib/outcome-tracking';
 
 interface CaseEvent {
   id: string;
@@ -375,6 +377,62 @@ export default function CaseDetailScreen() {
           </View>
         </Animated.View>
 
+        {/* Outcome Update */}
+        <Animated.View entering={FadeInDown.delay(250).springify()} style={styles.actionsSection}>
+          <Text style={[typography.h3, { color: colors.text }]}>Update Outcome</Text>
+          <Text style={[typography.caption, { color: colors.textSecondary }]}>
+            Did you win? Help others fight back (shared anonymously).
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {[
+              { status: 'approved', label: '🎉 I Won!', color: colors.success },
+              { status: 'denied_final', label: '😔 Denied', color: colors.error },
+              { status: 'pending', label: '⏳ Still Waiting', color: colors.warning },
+            ].map(opt => (
+              <Pressable
+                key={opt.status}
+                onPress={async () => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  // Update case status
+                  const newStatus = opt.status === 'approved' ? 'approved' : opt.status === 'denied_final' ? 'denied' : caseData.status;
+                  supabase.from('cases').update({ status: newStatus }).eq('id', caseData.id).then(() => fetchCaseDetails());
+
+                  // Submit anonymous outcome if won or lost
+                  if (opt.status !== 'pending') {
+                    await submitAnonymousOutcome({
+                      insurer_name: caseData.insurer_name || 'Unknown',
+                      procedure_type: 'general',
+                      procedure_category: caseData.procedure_name || 'Unknown',
+                      outcome: opt.status === 'approved' ? 'won' : 'lost',
+                      appeal_count: 1,
+                      used_peer_review: false,
+                      used_doi_complaint: false,
+                      days_to_resolution: null,
+                    });
+                  }
+
+                  if (opt.status === 'approved') {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  }
+                }}
+                style={[{
+                  flex: 1,
+                  paddingVertical: 12,
+                  borderRadius: radii.button,
+                  borderWidth: 1,
+                  borderColor: caseData.status === (opt.status === 'denied_final' ? 'denied' : opt.status) ? opt.color : colors.border,
+                  backgroundColor: caseData.status === (opt.status === 'denied_final' ? 'denied' : opt.status) ? `${opt.color}15` : colors.surface,
+                  alignItems: 'center',
+                }]}
+              >
+                <Text style={[typography.caption, { color: caseData.status === (opt.status === 'denied_final' ? 'denied' : opt.status) ? opt.color : colors.text }]}>
+                  {opt.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </Animated.View>
+
         {appealLetter && (
           <Animated.View entering={FadeInDown.springify()} style={[styles.letterSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.letterHeader}>
@@ -388,6 +446,7 @@ export default function CaseDetailScreen() {
               <Text style={[typography.body, { color: colors.text }]} selectable>{appealLetter}</Text>
             </ScrollView>
             <View style={styles.letterActions}>
+              <FORGEButton title="Email to Myself" onPress={() => emailLetterToSelf(`Appeal Letter - ${caseData.procedure_name}`, appealLetter!)} />
               <FORGEButton title="Copy / Share" onPress={() => Share.share({ title: 'Appeal Letter', message: appealLetter })} variant="secondary" />
             </View>
           </Animated.View>
@@ -406,6 +465,7 @@ export default function CaseDetailScreen() {
               <Text style={[typography.body, { color: colors.text }]} selectable>{complaintLetter}</Text>
             </ScrollView>
             <View style={styles.letterActions}>
+              <FORGEButton title="Email to Myself" onPress={() => emailLetterToSelf(`DOI Complaint - ${caseData.procedure_name}`, complaintLetter!)} />
               <FORGEButton title="Copy / Share" onPress={() => Share.share({ title: 'DOI Complaint', message: complaintLetter })} variant="secondary" />
             </View>
           </Animated.View>
