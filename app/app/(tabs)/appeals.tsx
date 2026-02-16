@@ -263,7 +263,6 @@ export default function AppealsScreen() {
           <Text style={[typography.caption, { color: colors.textSecondary }]}>PriorAuth Buddy</Text>
         </View>
         <Text style={[typography.h1, { color: colors.text }]}>Appeals</Text>
-        <Text style={[typography.body, { color: colors.textSecondary }]}>AI-powered appeal letters that win</Text>
       </View>
 
       {savedAppeals.length === 0 && !loading ? (
