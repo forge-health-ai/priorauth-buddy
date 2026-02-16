@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, Pressable, Alert, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeIn, BounceIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme, radii } from '../../src/theme';
@@ -45,6 +45,7 @@ export default function CaseDetailScreen() {
   const [showAnalyzer, setShowAnalyzer] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<DenialAnalysis | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
   const [appealLetter, setAppealLetter] = useState<string | null>(null);
   const [complaintLetter, setComplaintLetter] = useState<string | null>(null);
 
@@ -307,13 +308,14 @@ export default function CaseDetailScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.springify()}>
-          <View style={[styles.statusBadge, { backgroundColor: `${status.color}20` }]}>
-            <Text style={[typography.caption, { color: status.color }]}>
-              {status.emoji} {status.label}
-            </Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={[typography.h1, { color: colors.text, flex: 1 }]}>{caseData.procedure_name}</Text>
+            <View style={[styles.statusBadge, { backgroundColor: `${status.color}20` }]}>
+              <Text style={[typography.caption, { color: status.color }]}>
+                {status.emoji} {status.label}
+              </Text>
+            </View>
           </View>
-
-          <Text style={[typography.h1, { color: colors.text }]}>{caseData.procedure_name}</Text>
           <Text style={[typography.body, { color: colors.textSecondary }]}>{caseData.insurer_name}</Text>
 
           {daysRemaining !== null && daysRemaining <= 7 && daysRemaining > 0 && (
@@ -431,6 +433,8 @@ export default function CaseDetailScreen() {
 
                   if (opt.status === 'approved') {
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    setShowCelebration(true);
+                    setTimeout(() => setShowCelebration(false), 4000);
                   }
                 }}
                 style={[{
@@ -598,6 +602,26 @@ export default function CaseDetailScreen() {
           )}
         </Animated.View>
       </ScrollView>
+      {/* Victory Celebration Overlay */}
+      {showCelebration && (
+        <Animated.View entering={FadeIn.duration(300)} style={{
+          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', zIndex: 100,
+        }}>
+          <Animated.View entering={BounceIn.delay(200).duration(800)}>
+            <BuddyMascot mood="celebrating" size={120} />
+          </Animated.View>
+          <Animated.View entering={FadeInDown.delay(500).springify()} style={{ alignItems: 'center', gap: 8, paddingHorizontal: 40 }}>
+            <Text style={[typography.h1, { color: '#FFD700', textAlign: 'center' }]}>YOU WON! 🎉</Text>
+            <Text style={[typography.body, { color: '#FFFFFF', textAlign: 'center' }]}>
+              You stood up to {caseData.insurer_name} and won. That takes real courage.
+            </Text>
+            <Text style={[typography.caption, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>
+              Your anonymous win helps others fight back too.
+            </Text>
+          </Animated.View>
+        </Animated.View>
+      )}
     </SafeAreaView>
   );
 }
@@ -608,7 +632,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 100, gap: 20 },
-  statusBadge: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.pill, marginBottom: 12 },
+  statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.pill },
   alertCard: { borderRadius: radii.card, padding: 16, marginTop: 16, borderWidth: 1, borderColor: 'rgba(255, 59, 92, 0.15)' },
   infoSection: { gap: 12 },
   infoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
