@@ -76,19 +76,19 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank: rankPro
     );
   }, []);
 
-  // Legend glow pulsing
+  // Rank glow pulsing (Veteran+)
   useEffect(() => {
-    if (rankName === 'Legend') {
+    if (hasGlow) {
       glowOpacity.value = withRepeat(
         withSequence(
           withTiming(0.6, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0.3, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+          withTiming(0.25, { duration: 1500, easing: Easing.inOut(Easing.ease) })
         ),
         -1,
         true
       );
     }
-  }, [rankName]);
+  }, [hasGlow]);
 
   // Pro glow pulsing
   const proGlow = useSharedValue(1);
@@ -133,8 +133,8 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank: rankPro
   const r = size * 0.045;
   const pr = size * 0.025;
 
-  // Advocate+ gets slightly narrower/sharper eyes
-  const eyeNarrow = rankName === 'Advocate' || rankName === 'Champion' || rankName === 'Legend';
+  // Advocate+ gets slightly narrower/sharper eyes (tier 2+)
+  const eyeNarrow = tier >= 2;
 
   const getEyes = () => {
     if (isBlinking) {
@@ -262,25 +262,35 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank: rankPro
       case 'excited':
         return <Path d={`M${mx - w} ${my - 3} Q${mx} ${my + w * 1.2} ${mx + w} ${my - 3}`} stroke={eyeColor} strokeWidth={2.5} fill="#FF6B35" fillOpacity={0.2} strokeLinecap="round" />;
       case 'determined':
-        // Champion+ gets a confident smirk instead of flat line
-        if (rankName === 'Champion' || rankName === 'Legend') {
+        // Warrior+ gets a confident smirk instead of flat line
+        if (tier >= 3) {
           return <Path d={`M${mx - w * 0.6} ${my + 1} Q${mx} ${my - 2} ${mx + w * 0.8} ${my - 1}`} stroke={eyeColor} strokeWidth={2.5} fill="none" strokeLinecap="round" />;
         }
         return <Path d={`M${mx - w * 0.8} ${my} L${mx + w * 0.8} ${my}`} stroke={eyeColor} strokeWidth={2.5} strokeLinecap="round" />;
       case 'curious':
         return <Ellipse cx={mx} cy={my + 1} rx={w * 0.45} ry={w * 0.4} fill={eyeColor} opacity={0.4} />;
       default:
-        // Champion+ gets a wider, more confident smile
-        if (rankName === 'Champion' || rankName === 'Legend') {
+        // Warrior+ gets a wider, more confident smile
+        if (tier >= 3) {
           return <Path d={`M${mx - w * 1.1} ${my - 1} Q${mx} ${my + w * 1.1} ${mx + w * 1.1} ${my - 1}`} stroke={eyeColor} strokeWidth={2.5} fill="none" strokeLinecap="round" />;
         }
         return <Path d={`M${mx - w} ${my} Q${mx} ${my + w * 0.8} ${mx + w} ${my}`} stroke={eyeColor} strokeWidth={2.5} fill="none" strokeLinecap="round" />;
     }
   };
 
+  // Tier helpers for visual logic
+  const tier = rank?.tier ?? 0;
+  const hasRedTrim = rankName === 'Warrior'; // red accent border
+  const hasGoldTrim = tier >= 4 && tier <= 5; // Champion + Veteran
+  const hasPlatinumTrim = tier >= 6; // Elite + Legend
+  const hasStar = tier >= 5; // Veteran+
+  const hasDualStars = tier >= 6; // Elite+
+  const hasCrown = rankName === 'Legend';
+  const hasGlow = tier >= 5; // Veteran+
+
   // Compute SVG dimensions with room for crown and glow
-  const padding = isPro ? size * 0.2 : rankName === 'Legend' ? size * 0.15 : 0;
-  const crownHeight = (rankName === 'Legend' || rankName === 'Champion') ? size * 0.12 : 0;
+  const padding = isPro ? size * 0.2 : hasGlow ? size * 0.15 : 0;
+  const crownHeight = hasCrown ? size * 0.12 : 0;
   const totalW = size + padding * 2;
   const totalH = size * 0.85 + padding * 2 + crownHeight;
   const offsetX = padding;
@@ -348,25 +358,25 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank: rankPro
           </>
         )}
 
-        {/* Legend animated glow - rendered as static, animated via wrapper */}
-        {rankName === 'Legend' && (
+        {/* Rank glow aura (Veteran+) */}
+        {hasGlow && (
           <Circle
             cx={offsetX + size * 0.5}
             cy={offsetY + size * 0.42}
             r={size * 0.44}
-            fill="#FFD700"
+            fill={hasPlatinumTrim ? '#C0C0FF' : '#FFD700'}
             opacity={0.15}
           />
         )}
 
         {/* Crown for Legend */}
-        {rankName === 'Legend' && (
+        {hasCrown && (
           <G>
             <Polygon
               points={`${offsetX + size * 0.3},${offsetY - size * 0.02} ${offsetX + size * 0.37},${offsetY - size * 0.1} ${offsetX + size * 0.44},${offsetY - size * 0.03} ${offsetX + size * 0.5},${offsetY - size * 0.12} ${offsetX + size * 0.56},${offsetY - size * 0.03} ${offsetX + size * 0.63},${offsetY - size * 0.1} ${offsetX + size * 0.7},${offsetY - size * 0.02}`}
-              fill="#FFD700"
-              stroke="#DAA520"
-              strokeWidth={1}
+              fill="#E8E8E8"
+              stroke="#B0C4DE"
+              strokeWidth={1.5}
             />
           </G>
         )}
@@ -377,12 +387,32 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank: rankPro
           fill={shieldColor}
         />
 
-        {/* Champion/Legend gold trim border */}
-        {(rankName === 'Champion' || rankName === 'Legend') && (
+        {/* Warrior red trim border */}
+        {hasRedTrim && (
+          <Path
+            d={`M${offsetX + size * 0.5} ${offsetY + size * 0.05} L${offsetX + size * 0.88} ${offsetY + size * 0.2} L${offsetX + size * 0.88} ${offsetY + size * 0.5} Q${offsetX + size * 0.88} ${offsetY + size * 0.75} ${offsetX + size * 0.5} ${offsetY + size * 0.82} Q${offsetX + size * 0.12} ${offsetY + size * 0.75} ${offsetX + size * 0.12} ${offsetY + size * 0.5} L${offsetX + size * 0.12} ${offsetY + size * 0.2} Z`}
+            fill="none"
+            stroke="#C0392B"
+            strokeWidth={2.5}
+          />
+        )}
+
+        {/* Champion/Veteran gold trim border */}
+        {hasGoldTrim && (
           <Path
             d={`M${offsetX + size * 0.5} ${offsetY + size * 0.05} L${offsetX + size * 0.88} ${offsetY + size * 0.2} L${offsetX + size * 0.88} ${offsetY + size * 0.5} Q${offsetX + size * 0.88} ${offsetY + size * 0.75} ${offsetX + size * 0.5} ${offsetY + size * 0.82} Q${offsetX + size * 0.12} ${offsetY + size * 0.75} ${offsetX + size * 0.12} ${offsetY + size * 0.5} L${offsetX + size * 0.12} ${offsetY + size * 0.2} Z`}
             fill="none"
             stroke="#FFD700"
+            strokeWidth={2.5}
+          />
+        )}
+
+        {/* Elite/Legend platinum trim border */}
+        {hasPlatinumTrim && (
+          <Path
+            d={`M${offsetX + size * 0.5} ${offsetY + size * 0.05} L${offsetX + size * 0.88} ${offsetY + size * 0.2} L${offsetX + size * 0.88} ${offsetY + size * 0.5} Q${offsetX + size * 0.88} ${offsetY + size * 0.75} ${offsetX + size * 0.5} ${offsetY + size * 0.82} Q${offsetX + size * 0.12} ${offsetY + size * 0.75} ${offsetX + size * 0.12} ${offsetY + size * 0.5} L${offsetX + size * 0.12} ${offsetY + size * 0.2} Z`}
+            fill="none"
+            stroke="#E8E8E8"
             strokeWidth={2.5}
           />
         )}
@@ -395,7 +425,7 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank: rankPro
         />
 
         {/* Fighter battle scar */}
-        {(rankName === 'Fighter') && (
+        {rankName === 'Fighter' && (
           <Line
             x1={offsetX + size * 0.62}
             y1={offsetY + size * 0.18}
@@ -405,6 +435,28 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank: rankPro
             strokeWidth={2}
             strokeLinecap="round"
           />
+        )}
+
+        {/* Star emblem (Veteran+) */}
+        {hasStar && (
+          <G>
+            <Polygon
+              points={`${offsetX + size * 0.5},${offsetY + size * 0.13} ${offsetX + size * 0.53},${offsetY + size * 0.2} ${offsetX + size * 0.6},${offsetY + size * 0.2} ${offsetX + size * 0.54},${offsetY + size * 0.24} ${offsetX + size * 0.57},${offsetY + size * 0.31} ${offsetX + size * 0.5},${offsetY + size * 0.27} ${offsetX + size * 0.43},${offsetY + size * 0.31} ${offsetX + size * 0.46},${offsetY + size * 0.24} ${offsetX + size * 0.4},${offsetY + size * 0.2} ${offsetX + size * 0.47},${offsetY + size * 0.2}`}
+              fill={hasPlatinumTrim ? '#E8E8E8' : '#FFD700'}
+              opacity={0.9}
+            />
+          </G>
+        )}
+
+        {/* Second star (Elite+) */}
+        {hasDualStars && (
+          <G>
+            <Polygon
+              points={`${offsetX + size * 0.5},${offsetY + size * 0.62} ${offsetX + size * 0.52},${offsetY + size * 0.67} ${offsetX + size * 0.57},${offsetY + size * 0.67} ${offsetX + size * 0.53},${offsetY + size * 0.7} ${offsetX + size * 0.55},${offsetY + size * 0.75} ${offsetX + size * 0.5},${offsetY + size * 0.72} ${offsetX + size * 0.45},${offsetY + size * 0.75} ${offsetX + size * 0.47},${offsetY + size * 0.7} ${offsetX + size * 0.43},${offsetY + size * 0.67} ${offsetX + size * 0.48},${offsetY + size * 0.67}`}
+              fill={hasPlatinumTrim ? '#E8E8E8' : '#FFD700'}
+              opacity={0.7}
+            />
+          </G>
         )}
 
         {/* Face area */}

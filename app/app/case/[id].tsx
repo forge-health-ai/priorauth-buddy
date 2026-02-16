@@ -459,7 +459,8 @@ export default function CaseDetailScreen() {
                   if (opt.status === 'approved') {
                     try {
                       const oldStats = await getUserBuddyStats();
-                      const newStats = { ...oldStats, wins: oldStats.wins + 1 };
+                      const newInsurers = [...new Set([...oldStats.insurersBeaten, caseData.insurer_name].filter(Boolean))];
+                      const newStats = { ...oldStats, wins: oldStats.wins + 1, insurersBeaten: newInsurers };
                       const newRank = checkRankUp(oldStats, newStats);
                       const sub = await getSubscriptionStatus();
                       setIsPro(sub.tier === 'pro');

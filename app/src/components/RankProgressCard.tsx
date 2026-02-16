@@ -1,17 +1,20 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme, radii } from '../theme';
-import { BuddyRank, getNextRankProgress } from '../lib/buddy-evolution';
+import { BuddyRank, getNextRankProgress, FullStats } from '../lib/buddy-evolution';
 
 interface RankProgressCardProps {
-  stats: { appealsFiled: number; wins: number };
+  stats: FullStats;
 }
 
 const RANK_EMOJI: Record<string, string> = {
   Rookie: '🛡️',
   Fighter: '⚔️',
   Advocate: '🏛️',
+  Warrior: '💪',
   Champion: '🏆',
+  Veteran: '⭐',
+  Elite: '✨',
   Legend: '👑',
 };
 
