@@ -267,20 +267,20 @@ export default function AppealsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.formContent} showsVerticalScrollIndicator={false}>
-        {/* New Appeal Button */}
-        <Animated.View entering={FadeInDown.springify()} style={{ marginBottom: 20 }}>
-          <FORGEButton title="Write New Appeal" onPress={() => setView('form')} />
-        </Animated.View>
-
         {/* Saved Appeals */}
         {savedAppeals.length === 0 && !loading ? (
           <EmptyState
             mood="thinking"
             title="No appeals yet"
             subtitle="Generate your first appeal letter and it will appear here for reference"
+            actionLabel="Write New Appeal"
+            onAction={() => setView('form')}
           />
         ) : (
           <View style={{ gap: 12 }}>
+            <Animated.View entering={FadeInDown.springify()} style={{ marginBottom: 8 }}>
+              <FORGEButton title="Write New Appeal" onPress={() => setView('form')} />
+            </Animated.View>
             <Text style={[typography.h3, { color: colors.text }]}>Your Documents</Text>
             {(() => {
               // Group appeals (not complaints) by case and number them
