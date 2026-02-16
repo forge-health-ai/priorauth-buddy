@@ -26,7 +26,7 @@ export default function RootLayout() {
   const [needsTerms, setNeedsTerms] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Outfit_400Regular,
     Outfit_500Medium,
     Outfit_600SemiBold,
@@ -109,12 +109,12 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (fontsLoaded && !loading) {
+    if ((fontsLoaded || fontError) && !loading) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, loading]);
+  }, [fontsLoaded, fontError, loading]);
 
-  if (!fontsLoaded || loading) return null;
+  if (loading) return null;
 
   const statusStyle = scheme === 'dark' ? 'light' : 'dark';
 
