@@ -37,16 +37,22 @@ interface OnboardingProps {
   onComplete: () => void;
 }
 
-// Particle/confetti component for celebration
-function ConfettiParticle({ delay, x, color }: { delay: number; x: number; color: string }) {
+// Particle/confetti component for celebration - falls from top to bottom
+function ConfettiParticle({ delay, x, color, size }: { delay: number; x: number; color: string; size?: number }) {
+  const s = size || (4 + Math.random() * 6);
   return (
     <Animated.View
-      entering={FadeInUp.delay(delay).duration(800).springify()}
+      entering={FadeInDown.delay(delay).duration(1800 + Math.random() * 1200)}
       style={[
-        styles.confettiParticle,
         {
+          position: 'absolute',
+          top: -10,
           left: x,
+          width: s,
+          height: s * (0.6 + Math.random() * 0.8),
           backgroundColor: color,
+          borderRadius: s > 6 ? 2 : s,
+          opacity: 0.85 + Math.random() * 0.15,
           transform: [{ rotate: `${Math.random() * 360}deg` }],
         },
       ]}
@@ -249,11 +255,11 @@ export default function OnboardingScreen({ onComplete }: OnboardingProps) {
         <Animated.View entering={FadeIn} style={styles.content}>
           {/* Confetti */}
           {confettiColors.map((color, i) =>
-            Array.from({ length: 3 }).map((_, j) => (
+            Array.from({ length: 5 }).map((_, j) => (
               <ConfettiParticle
                 key={`${i}-${j}`}
-                delay={i * 80 + j * 120}
-                x={Math.random() * (SCREEN_WIDTH - 20)}
+                delay={j * 60 + i * 40}
+                x={Math.random() * (SCREEN_WIDTH - 10)}
                 color={color}
               />
             ))
@@ -340,6 +346,7 @@ const styles = StyleSheet.create({
   input: {
     padding: 16,
     fontSize: 18,
+    outlineColor: 'transparent',
     textAlign: 'center',
   },
   dotsContainer: {
@@ -360,11 +367,5 @@ const styles = StyleSheet.create({
     marginTop: 16,
     width: '80%',
   },
-  confettiParticle: {
-    position: 'absolute',
-    top: 80,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
+    // confetti styles are inline now
 });
