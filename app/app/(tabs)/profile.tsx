@@ -6,7 +6,6 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTheme, radii } from '../../src/theme';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
-import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { FORGEButton } from '../../src/components/FORGEButton';
 import { supabase } from '../../src/lib/supabase';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -122,10 +121,7 @@ export default function ProfileScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.titleRow}>
-            <MiniBuddy mood="happy" size={24} />
-            <Text style={[typography.caption, { color: colors.textSecondary }]}>PriorAuth Buddy</Text>
-          </View>
+          <Text style={[typography.caption, { color: colors.textSecondary }]}>PriorAuth Buddy</Text>
           <Text style={[typography.h1, { color: colors.text }]}>Profile</Text>
         </View>
 
@@ -133,7 +129,7 @@ export default function ProfileScreen() {
           <Pressable onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}>
             <LinearGradient colors={['#8B5CF6', '#6D28D9']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.proCard}>
               <View style={styles.proContent}>
-                <BuddyMascot mood="celebrating" size={70} />
+                <BuddyMascot mood="celebrating" size={70} isPro={true} />
                 <View style={{ flex: 1 }}>
                   <Text style={[typography.h2, { color: '#FFFFFF' }]}>Go Pro</Text>
                   <Text style={[typography.body, { color: 'rgba(255,255,255,0.8)' }]}>Unlimited cases, appeals, and priority support</Text>

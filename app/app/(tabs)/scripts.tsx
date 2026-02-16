@@ -6,8 +6,14 @@ import Animated, { FadeInDown, useSharedValue, withSpring } from 'react-native-r
 import * as Haptics from 'expo-haptics';
 import { useTheme, radii, springs } from '../../src/theme';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
-import { MiniBuddy } from '../../src/components/MiniBuddy';
 import type { BuddyMood } from '../../src/components/BuddyMascot';
+
+const SCRIPT_ICONS: Record<string, string> = {
+  '1': '🔍',
+  '2': '⏰',
+  '3': '❓',
+  '4': '⬆️',
+};
 
 const SCRIPTS: Array<{ id: string; scenario: string; buddyMood: BuddyMood; intro: string; phrases: string[]; rebuttals: Record<string, string>; tips: string[] }> = [
   {
@@ -58,12 +64,15 @@ const SCRIPTS: Array<{ id: string; scenario: string; buddyMood: BuddyMood; intro
 
 function ScriptCard({ script, isExpanded, onToggle, onPractice }: { script: typeof SCRIPTS[0]; isExpanded: boolean; onToggle: () => void; onPractice: () => void }) {
   const { colors, typography } = useTheme();
+  const icon = SCRIPT_ICONS[script.id] || '🛡️';
 
   return (
     <View style={[styles.scriptCard, { backgroundColor: colors.surface }]}>
       <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onToggle(); }}>
         <View style={styles.scriptHeader}>
-          <MiniBuddy mood={script.buddyMood} size={36} />
+          <View style={[styles.scriptIcon, { backgroundColor: `${colors.primary}15` }]}>
+            <Text style={{ fontSize: 18 }}>{icon}</Text>
+          </View>
           <Text style={[typography.h3, { color: colors.text, flex: 1 }]}>{script.scenario}</Text>
           <Text style={{ color: colors.textTertiary, fontSize: 18 }}>{isExpanded ? '▲' : '▼'}</Text>
         </View>
@@ -100,7 +109,7 @@ function ScriptCard({ script, isExpanded, onToggle, onPractice }: { script: type
               onPress={onPractice}
               style={[styles.practiceButton, { backgroundColor: colors.accent }]}
             >
-              <MiniBuddy mood="happy" size={20} />
+              <Text style={{ fontSize: 16 }}>🛡️</Text>
               <Text style={[typography.body, { color: '#fff', fontFamily: 'Outfit_600SemiBold' }]}>
                 Practice This Call
               </Text>
@@ -131,10 +140,7 @@ export default function ScriptsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <MiniBuddy mood="happy" size={24} />
-          <Text style={[typography.caption, { color: colors.textSecondary }]}>PriorAuth Buddy</Text>
-        </View>
+        <Text style={[typography.caption, { color: colors.textSecondary }]}>PriorAuth Buddy</Text>
         <Text style={[typography.h1, { color: colors.text }]}>Call Scripts</Text>
         <Text style={[typography.body, { color: colors.textSecondary }]}>Know exactly what to say</Text>
       </View>
@@ -171,6 +177,7 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: 20, gap: 12, paddingBottom: 100 },
   scriptCard: { borderRadius: radii.card, padding: 16, shadowColor: 'rgba(0,0,0,0.06)', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 8, elevation: 2 },
   scriptHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  scriptIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   section: { marginTop: 16, padding: 12, borderRadius: radii.button, borderLeftWidth: 3, gap: 6 },
   phraseRow: { paddingVertical: 6 },
   rebuttalBlock: { paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.02)', borderRadius: radii.button, marginBottom: 8 },

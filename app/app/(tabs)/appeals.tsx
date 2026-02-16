@@ -7,7 +7,6 @@ import { useTheme, radii } from '../../src/theme';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
 import { FORGEButton } from '../../src/components/FORGEButton';
 import { EmptyState } from '../../src/components/EmptyState';
-import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { supabase, Case } from '../../src/lib/supabase';
 import { generateAppealLetter } from '../../src/lib/ai';
 import { emailLetterToSelf } from '../../src/lib/email-letter';
@@ -258,10 +257,7 @@ export default function AppealsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <MiniBuddy mood="celebrating" size={24} />
-          <Text style={[typography.caption, { color: colors.textSecondary }]}>PriorAuth Buddy</Text>
-        </View>
+        <Text style={[typography.caption, { color: colors.textSecondary }]}>PriorAuth Buddy</Text>
         <Text style={[typography.h1, { color: colors.text }]}>Appeals</Text>
       </View>
 
@@ -278,7 +274,7 @@ export default function AppealsScreen() {
         {(
           <View style={{ gap: 12 }}>
             <Animated.View entering={FadeInDown.springify()} style={{ marginBottom: 8 }}>
-              <FORGEButton title="Write New Appeal" onPress={() => setView('form')} />
+              <FORGEButton title="+ Write New Appeal" onPress={() => setView('form')} variant="secondary" />
             </Animated.View>
             <Text style={[typography.h3, { color: colors.text }]}>Your Documents</Text>
             {(() => {
@@ -322,7 +318,9 @@ export default function AppealsScreen() {
                       style={[styles.appealCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
                     >
                       <View style={styles.appealCardHeader}>
-                        <MiniBuddy mood={appeal.mood} size={28} />
+                        <View style={[styles.docIcon, { backgroundColor: appeal.document_type === 'complaint' ? `${colors.error}15` : `${colors.primary}15` }]}>
+                          <Text style={{ fontSize: 16 }}>{appeal.document_type === 'complaint' ? '⚖️' : '📄'}</Text>
+                        </View>
                         <View style={{ flex: 1 }}>
                           <Text style={[typography.body, { color: colors.text, fontFamily: 'Outfit_600SemiBold' }]} numberOfLines={1}>
                             {appeal.procedure_name} · {appeal.label}
@@ -365,4 +363,5 @@ const styles = StyleSheet.create({
   buttonRow: { flexDirection: 'row', gap: 12, marginTop: 16 },
   appealCard: { borderWidth: 1, borderRadius: radii.card, padding: 16 },
   appealCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  docIcon: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
 });
