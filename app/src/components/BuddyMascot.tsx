@@ -90,6 +90,21 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank: rankPro
     }
   }, [rankName]);
 
+  // Pro glow pulsing
+  const proGlow = useSharedValue(1);
+  useEffect(() => {
+    if (isPro) {
+      proGlow.value = withRepeat(
+        withSequence(
+          withTiming(1.08, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1.0, { duration: 2000, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        true
+      );
+    }
+  }, [isPro]);
+
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       { translateY: floatY.value },
@@ -264,7 +279,7 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank: rankPro
   };
 
   // Compute SVG dimensions with room for crown and glow
-  const padding = rankName === 'Legend' || isPro ? size * 0.15 : 0;
+  const padding = isPro ? size * 0.2 : rankName === 'Legend' ? size * 0.15 : 0;
   const crownHeight = (rankName === 'Legend' || rankName === 'Champion') ? size * 0.12 : 0;
   const totalW = size + padding * 2;
   const totalH = size * 0.85 + padding * 2 + crownHeight;
@@ -274,26 +289,61 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank: rankPro
   return (
     <AnimatedPressable style={animatedStyle} onPress={handlePress}>
       <Svg width={totalW} height={totalH} viewBox={`0 0 ${totalW} ${totalH}`}>
-        {/* Pro glow ring - outer soft glow */}
+        {/* Pro glow - triple-layer electric blue aura */}
         {isPro && (
           <>
+            {/* Outermost diffuse glow */}
+            <Circle
+              cx={offsetX + size * 0.5}
+              cy={offsetY + size * 0.42}
+              r={size * 0.56}
+              fill="none"
+              stroke="#4A9EFF"
+              strokeWidth={size * 0.12}
+              opacity={0.12}
+            />
+            {/* Mid glow ring */}
             <Circle
               cx={offsetX + size * 0.5}
               cy={offsetY + size * 0.42}
               r={size * 0.52}
               fill="none"
-              stroke="#4A9EFF"
-              strokeWidth={size * 0.08}
-              opacity={0.15}
+              stroke="#60B0FF"
+              strokeWidth={size * 0.06}
+              opacity={0.3}
             />
+            {/* Inner bright ring */}
             <Circle
               cx={offsetX + size * 0.5}
               cy={offsetY + size * 0.42}
               r={size * 0.48}
               fill="none"
-              stroke="#4A9EFF"
-              strokeWidth={size * 0.035}
-              opacity={0.55}
+              stroke="#80CFFF"
+              strokeWidth={size * 0.025}
+              opacity={0.7}
+            />
+            {/* Top highlight spark */}
+            <Circle
+              cx={offsetX + size * 0.5}
+              cy={offsetY + size * 0.42 - size * 0.48}
+              r={size * 0.03}
+              fill="#FFFFFF"
+              opacity={0.8}
+            />
+            {/* Side sparkles */}
+            <Circle
+              cx={offsetX + size * 0.5 + size * 0.46}
+              cy={offsetY + size * 0.32}
+              r={size * 0.02}
+              fill="#FFFFFF"
+              opacity={0.6}
+            />
+            <Circle
+              cx={offsetX + size * 0.5 - size * 0.44}
+              cy={offsetY + size * 0.35}
+              r={size * 0.02}
+              fill="#FFFFFF"
+              opacity={0.5}
             />
           </>
         )}
