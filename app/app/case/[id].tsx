@@ -72,6 +72,24 @@ export default function CaseDetailScreen() {
 
       setCaseData(caseItem);
 
+      // Restore analysis from saved notes if present
+      if (caseItem.notes && caseItem.notes.includes('[AI Denial Analysis')) {
+        try {
+          const match = caseItem.notes.match(/\[AI Denial Analysis[^\]]*\]\n\nDenial Reason: ([\s\S]*?)\n\nClinical Criteria: ([\s\S]*?)\n\nTimeline: ([\s\S]*?)\n\nAppeal Angles:\n([\s\S]*?)\n\nNext Steps: ([\s\S]*?)$/);
+          if (match) {
+            setAnalysisResult({
+              denialReason: match[1].trim(),
+              clinicalCriteria: match[2].trim(),
+              timeline: match[3].trim(),
+              appealAngles: match[4].split('\n').map(a => a.replace(/^\d+\.\s*/, '').trim()).filter(Boolean),
+              nextSteps: match[5].trim(),
+            });
+          }
+        } catch (e) {
+          // Parsing failed, that's ok
+        }
+      }
+
       // Fetch events
       const { data: eventsData, error: eventsError } = await supabase
         .from('case_events')
