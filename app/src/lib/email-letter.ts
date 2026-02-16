@@ -1,46 +1,72 @@
 import { supabase } from './supabase';
+import * as Clipboard from 'expo-clipboard';
+import { Alert, Platform } from 'react-native';
 
 /**
  * Email a generated document to the user's signup email.
- * Uses mailto: as a zero-infrastructure approach that works on all platforms.
- * For v2, swap with SendGrid/Resend server-side for cleaner UX.
+ * Strategy:
+ *   1. Copy letter to clipboard (always works)
+ *   2. Open Gmail compose with pre-filled to/subject (body via clipboard)
+ *   3. User pastes the letter body
+ * 
+ * mailto: doesn't work reliably for long bodies (2000 char URL limit).
  */
 export async function emailLetterToSelf(
   subject: string,
   body: string,
-): Promise<{ success: boolean; method: 'mailto' | 'clipboard'; email?: string }> {
+): Promise<{ success: boolean; method: 'gmail' | 'clipboard'; email?: string }> {
   try {
     // Get user email
     let email: string | null = null;
-    const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
-    if (user?.email) {
-      email = user.email;
-    } else {
-      const { data: { session } } = await supabase.auth.getSession();
-      email = session?.user?.email || null;
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!error && user?.email) email = user.email;
+    } catch {}
+    if (!email) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        email = session?.user?.email || null;
+      } catch {}
     }
+
+    // Always copy to clipboard first
+    await Clipboard.setStringAsync(body);
 
     if (!email) {
-      return { success: false, method: 'mailto' };
+      Alert.alert(
+        'Copied to Clipboard',
+        'Your letter has been copied. Paste it into an email to send it.',
+      );
+      return { success: true, method: 'clipboard' };
     }
 
-    // Use mailto link (works on web + mobile, no server needed)
+    // Open Gmail compose (works for Gmail users, graceful fallback for others)
     const encodedSubject = encodeURIComponent(subject);
-    const encodedBody = encodeURIComponent(body);
-    const mailtoUrl = `mailto:${email}?subject=${encodedSubject}&body=${encodedBody}`;
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(email)}&su=${encodedSubject}&body=${encodeURIComponent('(Paste your letter here - it\'s already copied to your clipboard)')}`;
 
-    // On web, use location.href for mailto (window.open creates blank tab)
-    // On mobile, use Linking
     if (typeof window !== 'undefined') {
-      window.location.href = mailtoUrl;
+      // Web: open Gmail compose in new tab
+      window.open(gmailUrl, '_blank');
+      Alert.alert(
+        'Letter Copied + Email Opened',
+        `Your letter is copied to clipboard. Gmail opened with ${email} pre-filled. Just paste (Ctrl+V) to add the letter body.`,
+      );
     } else {
+      // Mobile: use Linking
       const { Linking } = require('react-native');
-      await Linking.openURL(mailtoUrl);
+      await Linking.openURL(gmailUrl);
     }
 
-    return { success: true, method: 'mailto', email };
+    return { success: true, method: 'gmail', email };
   } catch (error) {
     console.error('Email letter error:', error);
-    return { success: false, method: 'mailto' };
+    // Last resort: just copy
+    try {
+      await Clipboard.setStringAsync(body);
+      Alert.alert('Copied to Clipboard', 'Your letter has been copied. Paste it into an email.');
+      return { success: true, method: 'clipboard' };
+    } catch {
+      return { success: false, method: 'clipboard' };
+    }
   }
 }
