@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
 import { useFonts } from 'expo-font';
 import {
   Outfit_400Regular,
@@ -12,14 +11,16 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import { supabase } from '../src/lib/supabase';
 import { BuddyProvider } from '../src/context/BuddyContext';
+import { ThemeProvider, useThemeMode } from '../src/context/ThemeContext';
 import AuthScreen from './auth';
 import TermsScreen from './terms';
 import OnboardingScreen from './onboarding';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  const scheme = useColorScheme();
+function AppContent() {
+  // Note: this is wrapped by ThemeProvider in the default export below
+  const { isDark } = useThemeMode();
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [needsTerms, setNeedsTerms] = useState(false);
@@ -125,7 +126,7 @@ export default function RootLayout() {
   if (!session) {
     return (
       <>
-        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+        <StatusBar style={isDark ? 'light' : 'dark'} />
         <AuthScreen />
       </>
     );
@@ -135,7 +136,7 @@ export default function RootLayout() {
   if (needsTerms) {
     return (
       <>
-        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+        <StatusBar style={isDark ? 'light' : 'dark'} />
         <TermsScreen onAccepted={() => setNeedsTerms(false)} />
       </>
     );
@@ -145,7 +146,7 @@ export default function RootLayout() {
   if (needsOnboarding) {
     return (
       <>
-        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+        <StatusBar style={isDark ? 'light' : 'dark'} />
         <OnboardingScreen onComplete={() => setNeedsOnboarding(false)} />
       </>
     );
@@ -153,7 +154,7 @@ export default function RootLayout() {
 
   return (
     <BuddyProvider>
-      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="case/add" options={{ presentation: 'modal' }} />
@@ -162,5 +163,13 @@ export default function RootLayout() {
         <Stack.Screen name="terms" options={{ presentation: 'modal' }} />
       </Stack>
     </BuddyProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }

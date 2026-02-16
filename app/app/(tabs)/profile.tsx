@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTheme, radii } from '../../src/theme';
+import { useThemeMode, AppearanceMode } from '../../src/context/ThemeContext';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
 import { FORGEButton } from '../../src/components/FORGEButton';
 import { supabase } from '../../src/lib/supabase';
@@ -39,6 +40,7 @@ export default function ProfileScreen() {
   });
   const [buddyStats, setBuddyStats] = useState<UserBuddyStats>({ appealsFiled: 0, wins: 0, insurersBeaten: [] });
   const [isPro, setIsPro] = useState(false);
+  const { mode: appearanceMode, setMode: setAppearanceMode } = useThemeMode();
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -175,6 +177,29 @@ export default function ProfileScreen() {
         <Animated.View entering={FadeInDown.delay(200).springify()}>
           <Text style={[typography.h3, { color: colors.textSecondary, marginBottom: 12, marginTop: 24 }]}>SETTINGS</Text>
           <View style={[styles.settingsCard, { backgroundColor: colors.surface }]}>
+            <View style={[styles.settingRow, { borderBottomColor: colors.tabBarBorder }]}>
+              <Text style={[typography.body, { color: colors.text }]}>Appearance</Text>
+              <View style={{ flexDirection: 'row', gap: 4 }}>
+                {(['light', 'dark', 'auto'] as AppearanceMode[]).map(m => (
+                  <Pressable
+                    key={m}
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setAppearanceMode(m); }}
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: 8,
+                      backgroundColor: appearanceMode === m ? `${colors.primary}20` : 'transparent',
+                      borderWidth: 1,
+                      borderColor: appearanceMode === m ? colors.primary : colors.tabBarBorder,
+                    }}
+                  >
+                    <Text style={[typography.caption, { color: appearanceMode === m ? colors.primary : colors.textSecondary }]}>
+                      {m === 'light' ? '☀️' : m === 'dark' ? '🌙' : '⚙️'} {m.charAt(0).toUpperCase() + m.slice(1)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
             <View style={[styles.settingRow, { borderBottomColor: colors.tabBarBorder }]}>
               <Text style={[typography.body, { color: colors.text }]}>Push Notifications</Text>
               <Switch
