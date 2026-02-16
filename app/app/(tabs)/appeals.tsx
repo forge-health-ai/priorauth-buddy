@@ -266,17 +266,17 @@ export default function AppealsScreen() {
         <Text style={[typography.body, { color: colors.textSecondary }]}>AI-powered appeal letters that win</Text>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.formContent, savedAppeals.length === 0 && !loading && { flexGrow: 1 }]} showsVerticalScrollIndicator={false}>
-        {/* Saved Appeals */}
-        {savedAppeals.length === 0 && !loading ? (
-          <EmptyState
-            mood="thinking"
-            title="No appeals yet"
-            subtitle="Generate your first appeal letter and it will appear here for reference"
-            actionLabel="Write New Appeal"
-            onAction={() => setView('form')}
-          />
-        ) : (
+      {savedAppeals.length === 0 && !loading ? (
+        <EmptyState
+          mood="thinking"
+          title="No appeals yet"
+          subtitle="Generate your first appeal letter and it will appear here for reference"
+          actionLabel="Write New Appeal"
+          onAction={() => setView('form')}
+        />
+      ) : (
+      <ScrollView contentContainerStyle={styles.formContent} showsVerticalScrollIndicator={false}>
+        {(
           <View style={{ gap: 12 }}>
             <Animated.View entering={FadeInDown.springify()} style={{ marginBottom: 8 }}>
               <FORGEButton title="Write New Appeal" onPress={() => setView('form')} />
@@ -344,6 +344,7 @@ export default function AppealsScreen() {
           </View>
         )}
       </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
