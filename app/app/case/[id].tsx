@@ -46,6 +46,7 @@ export default function CaseDetailScreen() {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<DenialAnalysis | null>(null);
   const [showCelebration, setShowCelebration] = useState<'won' | 'denied' | 'waiting' | null>(null);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [appealLetter, setAppealLetter] = useState<string | null>(null);
   const [complaintLetter, setComplaintLetter] = useState<string | null>(null);
 
@@ -442,7 +443,7 @@ export default function CaseDetailScreen() {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setShowCelebration('waiting');
                   }
-                  setTimeout(() => setShowCelebration(null), 4000);
+                  // User closes by tapping the overlay
                 }}
                 style={[{
                   flex: 1,
@@ -593,8 +594,8 @@ export default function CaseDetailScreen() {
             events.map((event, index) => (
               <Pressable key={event.id} style={styles.timelineItem} onPress={() => {
                 if (event.event_type === 'denial_analyzed' && analysisResult) {
-                  // Scroll up to show analysis
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setExpandedEventId(expandedEventId === event.id ? null : event.id);
                 }
               }}>
                 <View style={[styles.timelineDot, { backgroundColor: event.event_type === 'denial_analyzed' ? colors.accent : colors.primary }]} />
@@ -605,10 +606,39 @@ export default function CaseDetailScreen() {
                   <Text style={[typography.caption, { color: colors.textSecondary }]}>
                     {formatDate(event.created_at)}
                   </Text>
-                  {event.event_type === 'denial_analyzed' && analysisResult && (
+                  {event.event_type === 'denial_analyzed' && analysisResult && expandedEventId !== event.id && (
                     <Text style={[typography.caption, { color: colors.primary, marginTop: 4 }]}>
-                      Analysis saved. Scroll up to view.
+                      Tap to view analysis ▾
                     </Text>
+                  )}
+                  {event.event_type === 'denial_analyzed' && analysisResult && expandedEventId === event.id && (
+                    <Animated.View entering={FadeInDown.duration(300)} style={{ marginTop: 10, gap: 10 }}>
+                      <View style={[{ backgroundColor: `${colors.error}10`, padding: 12, borderRadius: radii.card }]}>  
+                        <Text style={[typography.caption, { color: colors.error, fontFamily: 'Outfit_600SemiBold' }]}>Denial Reason</Text>
+                        <Text style={[typography.body, { color: colors.text, marginTop: 4 }]}>{analysisResult.denialReason}</Text>
+                      </View>
+                      <View style={[{ backgroundColor: `${colors.primary}10`, padding: 12, borderRadius: radii.card }]}>
+                        <Text style={[typography.caption, { color: colors.primary, fontFamily: 'Outfit_600SemiBold' }]}>Clinical Criteria</Text>
+                        <Text style={[typography.body, { color: colors.text, marginTop: 4 }]}>{analysisResult.clinicalCriteria}</Text>
+                      </View>
+                      <View style={[{ backgroundColor: `${colors.warning}10`, padding: 12, borderRadius: radii.card }]}>
+                        <Text style={[typography.caption, { color: colors.warning, fontFamily: 'Outfit_600SemiBold' }]}>Timeline</Text>
+                        <Text style={[typography.body, { color: colors.text, marginTop: 4 }]}>{analysisResult.timeline}</Text>
+                      </View>
+                      <View style={[{ backgroundColor: `${colors.success}10`, padding: 12, borderRadius: radii.card }]}>
+                        <Text style={[typography.caption, { color: colors.success, fontFamily: 'Outfit_600SemiBold' }]}>Appeal Angles</Text>
+                        {analysisResult.appealAngles.map((angle, i) => (
+                          <Text key={i} style={[typography.body, { color: colors.text, marginTop: 2 }]}>{i + 1}. {angle}</Text>
+                        ))}
+                      </View>
+                      <View style={[{ backgroundColor: `${colors.accent}10`, padding: 12, borderRadius: radii.card }]}>
+                        <Text style={[typography.caption, { color: colors.accent, fontFamily: 'Outfit_600SemiBold' }]}>Next Steps</Text>
+                        <Text style={[typography.body, { color: colors.text, marginTop: 4 }]}>{analysisResult.nextSteps}</Text>
+                      </View>
+                      <Pressable onPress={() => setExpandedEventId(null)}>
+                        <Text style={[typography.caption, { color: colors.primary, textAlign: 'center', marginTop: 4 }]}>Collapse ▴</Text>
+                      </Pressable>
+                    </Animated.View>
                   )}
                 </View>
                 {index < events.length - 1 && (
