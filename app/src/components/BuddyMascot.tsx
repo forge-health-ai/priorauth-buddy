@@ -274,17 +274,28 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank: rankPro
   return (
     <AnimatedPressable style={animatedStyle} onPress={handlePress}>
       <Svg width={totalW} height={totalH} viewBox={`0 0 ${totalW} ${totalH}`}>
-        {/* Pro glow ring */}
+        {/* Pro glow ring - outer soft glow */}
         {isPro && (
-          <Circle
-            cx={offsetX + size * 0.5}
-            cy={offsetY + size * 0.42}
-            r={size * 0.48}
-            fill="none"
-            stroke="#4A9EFF"
-            strokeWidth={size * 0.04}
-            opacity={0.25}
-          />
+          <>
+            <Circle
+              cx={offsetX + size * 0.5}
+              cy={offsetY + size * 0.42}
+              r={size * 0.52}
+              fill="none"
+              stroke="#4A9EFF"
+              strokeWidth={size * 0.08}
+              opacity={0.15}
+            />
+            <Circle
+              cx={offsetX + size * 0.5}
+              cy={offsetY + size * 0.42}
+              r={size * 0.48}
+              fill="none"
+              stroke="#4A9EFF"
+              strokeWidth={size * 0.035}
+              opacity={0.55}
+            />
+          </>
         )}
 
         {/* Legend animated glow - rendered as static, animated via wrapper */}

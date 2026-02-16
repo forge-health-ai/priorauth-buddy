@@ -273,9 +273,18 @@ export default function AppealsScreen() {
       <ScrollView contentContainerStyle={styles.formContent} showsVerticalScrollIndicator={false}>
         {(
           <View style={{ gap: 12 }}>
-            <Animated.View entering={FadeInDown.springify()} style={{ marginBottom: 8 }}>
-              <FORGEButton title="+ Write New Appeal" onPress={() => setView('form')} variant="secondary" />
-            </Animated.View>
+            <View style={styles.buddyIntro}>
+              <BuddyMascot mood="celebrating" size={60} />
+              <View style={[styles.buddyBubble, { backgroundColor: `${colors.primary}14` }]}>
+                <Text style={[typography.body, { color: colors.text }]}>Your appeals arsenal. Need another one?</Text>
+                <Pressable
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setView('form'); }}
+                  style={{ marginTop: 8 }}
+                >
+                  <Text style={[typography.body, { color: colors.primary, fontFamily: 'Outfit_600SemiBold' }]}>+ Write New Appeal</Text>
+                </Pressable>
+              </View>
+            </View>
             <Text style={[typography.h3, { color: colors.text }]}>Your Documents</Text>
             {(() => {
               // Group appeals (not complaints) by case and number them
@@ -364,4 +373,6 @@ const styles = StyleSheet.create({
   appealCard: { borderWidth: 1, borderRadius: radii.card, padding: 16 },
   appealCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   docIcon: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  buddyIntro: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 },
+  buddyBubble: { flex: 1, borderRadius: 16, padding: 12 },
 });

@@ -9,10 +9,10 @@ import { BuddyMascot } from '../../src/components/BuddyMascot';
 import type { BuddyMood } from '../../src/components/BuddyMascot';
 
 const SCRIPT_ICONS: Record<string, string> = {
-  '1': '🔍',
-  '2': '⏰',
-  '3': '❓',
-  '4': '⬆️',
+  '1': '📋',
+  '2': '🔥',
+  '3': '🔎',
+  '4': '🎯',
 };
 
 const SCRIPTS: Array<{ id: string; scenario: string; buddyMood: BuddyMood; intro: string; phrases: string[]; rebuttals: Record<string, string>; tips: string[] }> = [
@@ -70,9 +70,7 @@ function ScriptCard({ script, isExpanded, onToggle, onPractice }: { script: type
     <View style={[styles.scriptCard, { backgroundColor: colors.surface }]}>
       <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onToggle(); }}>
         <View style={styles.scriptHeader}>
-          <View style={[styles.scriptIcon, { backgroundColor: `${colors.primary}15` }]}>
-            <Text style={{ fontSize: 18 }}>{icon}</Text>
-          </View>
+          <Text style={{ fontSize: 22 }}>{icon}</Text>
           <Text style={[typography.h3, { color: colors.text, flex: 1 }]}>{script.scenario}</Text>
           <Text style={{ color: colors.textTertiary, fontSize: 18 }}>{isExpanded ? '▲' : '▼'}</Text>
         </View>
