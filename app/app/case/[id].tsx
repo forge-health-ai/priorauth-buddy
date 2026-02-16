@@ -19,6 +19,13 @@ import { getSubscriptionStatus } from '../../src/lib/subscription';
 import { BuddyRank } from '../../src/lib/buddy-evolution';
 import { useBuddy } from '../../src/context/BuddyContext';
 
+function isOutcomeSelected(caseStatus: string, optStatus: string): boolean {
+  if (optStatus === 'approved') return caseStatus === 'approved' || caseStatus === 'appeal_won';
+  if (optStatus === 'denied_final') return caseStatus === 'denied' || caseStatus === 'denied_final';
+  if (optStatus === 'pending') return caseStatus === 'appealing' || caseStatus === 'pending' || caseStatus === 'in_review';
+  return false;
+}
+
 interface CaseEvent {
   id: string;
   event_type: string;
@@ -425,9 +432,10 @@ export default function CaseDetailScreen() {
                 key={opt.status}
                 onPress={async () => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  // Update case status
+                  // Update case status (await so stats refresh sees new data)
                   const newStatus = opt.status === 'approved' ? 'approved' : opt.status === 'denied_final' ? 'denied' : 'appealing';
-                  supabase.from('cases').update({ status: newStatus }).eq('id', caseData.id).then(() => fetchCaseDetails());
+                  await supabase.from('cases').update({ status: newStatus }).eq('id', caseData.id);
+                  fetchCaseDetails();
 
                   // Submit anonymous outcome if won or lost
                   if (opt.status !== 'pending') {
@@ -442,6 +450,9 @@ export default function CaseDetailScreen() {
                       days_to_resolution: null,
                     });
                   }
+
+                  // Refresh global Buddy context so all screens show correct rank
+                  await refreshBuddy();
 
                   // Check for rank-up on win
                   if (opt.status === 'approved') {
@@ -458,8 +469,6 @@ export default function CaseDetailScreen() {
                           denials: (await supabase.from('cases').select('*', { count: 'exact', head: true }).eq('status', 'denied')).count ?? 0,
                         });
                       }
-                      // Refresh global Buddy context so all screens update
-                      await refreshBuddy();
                     } catch (e) {
                       console.error('Rank check error:', e);
                     }
@@ -483,12 +492,12 @@ export default function CaseDetailScreen() {
                   paddingVertical: 12,
                   borderRadius: radii.button,
                   borderWidth: 1,
-                  borderColor: caseData.status === (opt.status === 'denied_final' ? 'denied' : opt.status) ? opt.color : colors.border,
-                  backgroundColor: caseData.status === (opt.status === 'denied_final' ? 'denied' : opt.status) ? `${opt.color}15` : colors.surface,
+                  borderColor: isOutcomeSelected(caseData.status, opt.status) ? opt.color : colors.border,
+                  backgroundColor: isOutcomeSelected(caseData.status, opt.status) ? `${opt.color}15` : colors.surface,
                   alignItems: 'center',
                 }]}
               >
-                <Text style={[typography.caption, { color: caseData.status === (opt.status === 'denied_final' ? 'denied' : opt.status) ? opt.color : colors.text }]}>
+                <Text style={[typography.caption, { color: isOutcomeSelected(caseData.status, opt.status) ? opt.color : colors.text }]}>
                   {opt.label}
                 </Text>
               </Pressable>
@@ -682,8 +691,8 @@ export default function CaseDetailScreen() {
           )}
         </Animated.View>
       </ScrollView>
-      {/* Rank-Up Celebration Overlay */}
-      {rankUpData && (
+      {/* Rank-Up Celebration Overlay - shows AFTER win celebration is dismissed */}
+      {rankUpData && !showCelebration && (
         <RankUpCelebration
           rank={rankUpData.rank}
           wins={rankUpData.wins}
@@ -693,24 +702,29 @@ export default function CaseDetailScreen() {
         />
       )}
 
-      {/* Outcome Overlay */}
-      {showCelebration && !rankUpData && (
+      {/* Outcome Overlay - shows FIRST */}
+      {showCelebration && (
         <Pressable onPress={() => setShowCelebration(null)} style={{
           position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', zIndex: 100,
         }}>
-          {/* Confetti for wins */}
-          {showCelebration === 'won' && Array.from({ length: 30 }).map((_, i) => (
-            <Animated.View key={i} entering={FadeInDown.delay(i * 40).duration(1500 + Math.random() * 1000)} style={{
-              position: 'absolute', top: -10,
-              left: Math.random() * 400,
-              width: 5 + Math.random() * 6,
-              height: 4 + Math.random() * 8,
-              backgroundColor: ['#FFD700', '#FF6B35', '#FFB347', '#22C55E', '#FF6347', '#FF8C42'][i % 6],
-              borderRadius: 2,
-              transform: [{ rotate: `${Math.random() * 360}deg` }],
-            }} />
-          ))}
+          {/* Confetti for wins - scattered across screen */}
+          {showCelebration === 'won' && Array.from({ length: 40 }).map((_, i) => {
+            const colors6 = ['#FFD700', '#FF6B35', '#FFB347', '#22C55E', '#FF6347', '#FF8C42'];
+            return (
+              <Animated.View key={i} entering={FadeIn.delay(i * 50).duration(400)} style={{
+                position: 'absolute',
+                top: `${5 + Math.random() * 70}%` as any,
+                left: `${Math.random() * 95}%` as any,
+                width: 6 + Math.random() * 8,
+                height: 4 + Math.random() * 10,
+                backgroundColor: colors6[i % 6],
+                borderRadius: 2,
+                transform: [{ rotate: `${Math.random() * 360}deg` }],
+                opacity: 0.7 + Math.random() * 0.3,
+              }} />
+            );
+          })}
 
           <Animated.View entering={BounceIn.delay(200).duration(800)}>
             <BuddyMascot mood={showCelebration === 'won' ? 'celebrating' : showCelebration === 'denied' ? 'angry' : 'thinking'} size={120} />
