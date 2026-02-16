@@ -13,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { BuddyRank, RankName } from '../lib/buddy-evolution';
+import { useBuddy } from '../context/BuddyContext';
 
 export type BuddyMood = 'happy' | 'thinking' | 'angry' | 'celebrating' | 'confused' | 'sleeping' | 'excited' | 'determined' | 'curious';
 
@@ -26,7 +27,11 @@ interface BuddyMascotProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank, isPro }: BuddyMascotProps) {
+export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank: rankProp, isPro: isProProp }: BuddyMascotProps) {
+  // Auto-consume context when props aren't explicitly passed
+  const ctx = useBuddy();
+  const rank = rankProp ?? ctx.rank;
+  const isPro = isProProp ?? ctx.isPro;
   const floatY = useSharedValue(0);
   const breathScale = useSharedValue(1);
   const tapScale = useSharedValue(1);

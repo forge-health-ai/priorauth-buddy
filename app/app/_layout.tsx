@@ -11,6 +11,7 @@ import {
 } from '@expo-google-fonts/outfit';
 import * as SplashScreen from 'expo-splash-screen';
 import { supabase } from '../src/lib/supabase';
+import { BuddyProvider } from '../src/context/BuddyContext';
 import AuthScreen from './auth';
 import TermsScreen from './terms';
 import OnboardingScreen from './onboarding';
@@ -151,7 +152,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <BuddyProvider>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
@@ -160,6 +161,6 @@ export default function RootLayout() {
         <Stack.Screen name="call-coach" options={{ presentation: 'modal' }} />
         <Stack.Screen name="terms" options={{ presentation: 'modal' }} />
       </Stack>
-    </>
+    </BuddyProvider>
   );
 }
