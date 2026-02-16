@@ -15,6 +15,7 @@ import { emailLetterToSelf } from '../../src/lib/email-letter';
 import { submitAnonymousOutcome } from '../../src/lib/outcome-tracking';
 import { getUserBuddyStats, getBuddyRank, checkRankUp } from '../../src/lib/buddy-evolution';
 import { RankUpCelebration } from '../../src/components/RankUpCelebration';
+import { ConfettiFall } from '../../src/components/ConfettiFall';
 import { getSubscriptionStatus } from '../../src/lib/subscription';
 import { BuddyRank } from '../../src/lib/buddy-evolution';
 import { useBuddy } from '../../src/context/BuddyContext';
@@ -708,23 +709,8 @@ export default function CaseDetailScreen() {
           position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', zIndex: 100,
         }}>
-          {/* Confetti for wins - scattered across screen */}
-          {showCelebration === 'won' && Array.from({ length: 40 }).map((_, i) => {
-            const colors6 = ['#FFD700', '#FF6B35', '#FFB347', '#22C55E', '#FF6347', '#FF8C42'];
-            return (
-              <Animated.View key={i} entering={FadeIn.delay(i * 50).duration(400)} style={{
-                position: 'absolute',
-                top: `${5 + Math.random() * 70}%` as any,
-                left: `${Math.random() * 95}%` as any,
-                width: 6 + Math.random() * 8,
-                height: 4 + Math.random() * 10,
-                backgroundColor: colors6[i % 6],
-                borderRadius: 2,
-                transform: [{ rotate: `${Math.random() * 360}deg` }],
-                opacity: 0.7 + Math.random() * 0.3,
-              }} />
-            );
-          })}
+          {/* Confetti for wins - rains down from top */}
+          {showCelebration === 'won' && <ConfettiFall />}
 
           <Animated.View entering={BounceIn.delay(200).duration(800)}>
             <BuddyMascot mood={showCelebration === 'won' ? 'celebrating' : showCelebration === 'denied' ? 'angry' : 'thinking'} size={120} />
