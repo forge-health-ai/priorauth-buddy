@@ -18,6 +18,7 @@ import { generateAlerts, BuddyAlert } from '../../src/lib/buddy-alerts';
 import { BuddyAlertCard } from '../../src/components/BuddyAlertCard';
 import { getUserBuddyStats, getBuddyRank, UserBuddyStats } from '../../src/lib/buddy-evolution';
 import { getSubscriptionStatus } from '../../src/lib/subscription';
+import { useBuddy } from '../../src/context/BuddyContext';
 
 function getGreeting(name?: string): string {
   const hour = new Date().getHours();
@@ -43,19 +44,27 @@ export default function HomeScreen() {
   const [fightScore, setFightScore] = useState(0);
   const [userName, setUserName] = useState<string>('');
   const [alerts, setAlerts] = useState<BuddyAlert[]>([]);
-  const [buddyStats, setBuddyStats] = useState<UserBuddyStats>({ appealsFiled: 0, wins: 0, insurersBeaten: [] });
-  const [isPro, setIsPro] = useState(false);
-
-  const rank = getBuddyRank(buddyStats);
+  const { rank, isPro, stats: buddyStats, refresh: refreshBuddy } = useBuddy();
 
   const fetchCases = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      let userId: string | null = null;
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (!error && user) userId = user.id;
+      } catch {}
+      if (!userId) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          userId = session?.user?.id || null;
+        } catch {}
+      }
+      if (!userId) {
         setCases([]);
         setLoading(false);
         return;
       }
+      const user = { id: userId };
 
       // Fetch user's display name
       const { data: profile } = await supabase
@@ -90,13 +99,8 @@ export default function HomeScreen() {
       });
       setFightScore(Math.min(score, 100));
 
-      // Fetch buddy evolution stats
-      const stats = await getUserBuddyStats();
-      setBuddyStats(stats);
-
-      // Check subscription
-      const sub = await getSubscriptionStatus();
-      setIsPro(sub.tier === 'pro');
+      // Refresh buddy evolution context
+      refreshBuddy();
     } catch (error) {
       console.error('Error fetching cases:', error);
     } finally {
@@ -172,9 +176,9 @@ export default function HomeScreen() {
         </View>
 
         <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.buddySection}>
-          <BuddyMascot mood="happy" size={120} rank={rank} isPro={isPro} />
+          <BuddyMascot mood="happy" size={120} />
           <Text style={[typography.body, { color: colors.textSecondary, fontStyle: 'italic', textAlign: 'center', paddingHorizontal: 20 }]}>
-            "{rank.quote}"
+            "{rank?.quote || "Ready when you are. Let's fight this together."}"
           </Text>
           <View style={styles.scoreContainer}>
             <Text style={[typography.display, { color: colors.primary }]}>{fightScore}</Text>

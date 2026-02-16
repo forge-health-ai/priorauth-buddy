@@ -127,14 +127,17 @@ const STATS_KEY = 'buddy_evolution_stats';
 
 export async function getUserBuddyStats(): Promise<UserBuddyStats> {
   try {
-    // Get user with getSession fallback (getUser can 403 on web)
+    // Get user with getSession fallback (getUser can return null or 403 on web)
     let userId: string | null = null;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      userId = user?.id || null;
-    } catch {
-      const { data: { session } } = await supabase.auth.getSession();
-      userId = session?.user?.id || null;
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!error && user) userId = user.id;
+    } catch {}
+    if (!userId) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        userId = session?.user?.id || null;
+      } catch {}
     }
     if (userId) {
       const user = { id: userId };
