@@ -45,7 +45,7 @@ export default function CaseDetailScreen() {
   const [showAnalyzer, setShowAnalyzer] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<DenialAnalysis | null>(null);
-  const [showCelebration, setShowCelebration] = useState(false);
+  const [showCelebration, setShowCelebration] = useState<'won' | 'denied' | 'waiting' | null>(null);
   const [appealLetter, setAppealLetter] = useState<string | null>(null);
   const [complaintLetter, setComplaintLetter] = useState<string | null>(null);
 
@@ -414,12 +414,12 @@ export default function CaseDetailScreen() {
                 onPress={async () => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   // Update case status
-                  const newStatus = opt.status === 'approved' ? 'approved' : opt.status === 'denied_final' ? 'denied' : caseData.status;
+                  const newStatus = opt.status === 'approved' ? 'approved' : opt.status === 'denied_final' ? 'denied' : 'appealing';
                   supabase.from('cases').update({ status: newStatus }).eq('id', caseData.id).then(() => fetchCaseDetails());
 
                   // Submit anonymous outcome if won or lost
                   if (opt.status !== 'pending') {
-                    await submitAnonymousOutcome({
+                    submitAnonymousOutcome({
                       insurer_name: caseData.insurer_name || 'Unknown',
                       procedure_type: 'general',
                       procedure_category: caseData.procedure_name || 'Unknown',
@@ -431,11 +431,18 @@ export default function CaseDetailScreen() {
                     });
                   }
 
+                  // Show overlay for each outcome
                   if (opt.status === 'approved') {
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    setShowCelebration(true);
-                    setTimeout(() => setShowCelebration(false), 4000);
+                    setShowCelebration('won');
+                  } else if (opt.status === 'denied_final') {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                    setShowCelebration('denied');
+                  } else {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setShowCelebration('waiting');
                   }
+                  setTimeout(() => setShowCelebration(null), 4000);
                 }}
                 style={[{
                   flex: 1,
@@ -584,43 +591,95 @@ export default function CaseDetailScreen() {
             <Text style={[typography.body, { color: colors.textSecondary }]}>No events yet</Text>
           ) : (
             events.map((event, index) => (
-              <View key={event.id} style={styles.timelineItem}>
-                <View style={[styles.timelineDot, { backgroundColor: colors.primary }]} />
+              <Pressable key={event.id} style={styles.timelineItem} onPress={() => {
+                if (event.event_type === 'denial_analyzed' && analysisResult) {
+                  // Scroll up to show analysis
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
+              }}>
+                <View style={[styles.timelineDot, { backgroundColor: event.event_type === 'denial_analyzed' ? colors.accent : colors.primary }]} />
                 <View style={styles.timelineContent}>
                   <Text style={[typography.body, { color: colors.text }]}>
-                    {event.description}
+                    {event.title || event.description}
                   </Text>
                   <Text style={[typography.caption, { color: colors.textSecondary }]}>
                     {formatDate(event.created_at)}
                   </Text>
+                  {event.event_type === 'denial_analyzed' && analysisResult && (
+                    <Text style={[typography.caption, { color: colors.primary, marginTop: 4 }]}>
+                      Analysis saved. Scroll up to view.
+                    </Text>
+                  )}
                 </View>
                 {index < events.length - 1 && (
                   <View style={[styles.timelineLine, { backgroundColor: colors.tabBarBorder }]} />
                 )}
-              </View>
+              </Pressable>
             ))
           )}
         </Animated.View>
       </ScrollView>
-      {/* Victory Celebration Overlay */}
+      {/* Outcome Overlay */}
       {showCelebration && (
-        <Animated.View entering={FadeIn.duration(300)} style={{
+        <Pressable onPress={() => setShowCelebration(null)} style={{
           position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', zIndex: 100,
+          backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', zIndex: 100,
         }}>
+          {/* Confetti for wins */}
+          {showCelebration === 'won' && Array.from({ length: 30 }).map((_, i) => (
+            <Animated.View key={i} entering={FadeInDown.delay(i * 40).duration(1500 + Math.random() * 1000)} style={{
+              position: 'absolute', top: -10,
+              left: Math.random() * 400,
+              width: 5 + Math.random() * 6,
+              height: 4 + Math.random() * 8,
+              backgroundColor: ['#FFD700', '#FF6B35', '#FFB347', '#22C55E', '#FF6347', '#FF8C42'][i % 6],
+              borderRadius: 2,
+              transform: [{ rotate: `${Math.random() * 360}deg` }],
+            }} />
+          ))}
+
           <Animated.View entering={BounceIn.delay(200).duration(800)}>
-            <BuddyMascot mood="celebrating" size={120} />
+            <BuddyMascot mood={showCelebration === 'won' ? 'celebrating' : showCelebration === 'denied' ? 'angry' : 'thinking'} size={120} />
           </Animated.View>
           <Animated.View entering={FadeInDown.delay(500).springify()} style={{ alignItems: 'center', gap: 8, paddingHorizontal: 40 }}>
-            <Text style={[typography.h1, { color: '#FFD700', textAlign: 'center' }]}>YOU WON! 🎉</Text>
-            <Text style={[typography.body, { color: '#FFFFFF', textAlign: 'center' }]}>
-              You stood up to {caseData.insurer_name} and won. That takes real courage.
-            </Text>
-            <Text style={[typography.caption, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>
-              Your anonymous win helps others fight back too.
-            </Text>
+            {showCelebration === 'won' && (
+              <>
+                <Text style={[typography.h1, { color: '#FFD700', textAlign: 'center' }]}>YOU WON! 🎉</Text>
+                <Text style={[typography.body, { color: '#FFFFFF', textAlign: 'center' }]}>
+                  You stood up to {caseData.insurer_name} and won. That takes real courage.
+                </Text>
+                <Text style={[typography.caption, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>
+                  Your anonymous win helps others fight back too.
+                </Text>
+              </>
+            )}
+            {showCelebration === 'denied' && (
+              <>
+                <Text style={[typography.h1, { color: colors.error, textAlign: 'center' }]}>Not over yet! 🛡️</Text>
+                <Text style={[typography.body, { color: '#FFFFFF', textAlign: 'center' }]}>
+                  {caseData.insurer_name} said no. But 50% of denials are overturned on appeal. Buddy is ready to fight.
+                </Text>
+                <Text style={[typography.caption, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>
+                  Don't give up. Write an appeal or file a DOI complaint.
+                </Text>
+              </>
+            )}
+            {showCelebration === 'waiting' && (
+              <>
+                <Text style={[typography.h1, { color: colors.warning, textAlign: 'center' }]}>Hang in there! ⏳</Text>
+                <Text style={[typography.body, { color: '#FFFFFF', textAlign: 'center' }]}>
+                  Your case with {caseData.insurer_name} is still in play. Buddy is keeping watch.
+                </Text>
+                <Text style={[typography.caption, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>
+                  Use this time to prepare your appeal and call scripts.
+                </Text>
+              </>
+            )}
           </Animated.View>
-        </Animated.View>
+          <Animated.View entering={FadeIn.delay(1500)} style={{ marginTop: 20 }}>
+            <Text style={[typography.caption, { color: colors.textTertiary }]}>Tap anywhere to close</Text>
+          </Animated.View>
+        </Pressable>
       )}
     </SafeAreaView>
   );
