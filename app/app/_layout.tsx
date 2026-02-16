@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useColorScheme } from 'react-native';
 import { useFonts } from 'expo-font';
 import {
   Outfit_400Regular,
@@ -11,16 +12,15 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import { supabase } from '../src/lib/supabase';
 import { BuddyProvider } from '../src/context/BuddyContext';
-import { ThemeProvider, useThemeMode } from '../src/context/ThemeContext';
+import { ThemeProvider } from '../src/context/ThemeContext';
 import AuthScreen from './auth';
 import TermsScreen from './terms';
 import OnboardingScreen from './onboarding';
 
 SplashScreen.preventAutoHideAsync();
 
-function AppContent() {
-  // Note: this is wrapped by ThemeProvider in the default export below
-  const { isDark } = useThemeMode();
+export default function RootLayout() {
+  const scheme = useColorScheme();
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [needsTerms, setNeedsTerms] = useState(false);
@@ -33,7 +33,6 @@ function AppContent() {
     Outfit_700Bold,
   });
 
-  // Get user ID with getSession fallback (getUser can 403)
   const getUserId = async (): Promise<string | null> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -50,7 +49,6 @@ function AppContent() {
     }
   };
 
-  // Check if user needs to accept terms
   const checkTermsAcceptance = async (userId: string) => {
     const maxRetries = 3;
     for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -62,12 +60,10 @@ function AppContent() {
           .single();
 
         if (error && error.code === 'PGRST116') {
-          // No profile row yet — trigger may still be creating it
           if (attempt < maxRetries - 1) {
             await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
             continue;
           }
-          // After retries, treat as new user needing terms
           setNeedsTerms(true);
           setNeedsOnboarding(true);
           return;
@@ -92,7 +88,6 @@ function AppContent() {
   };
 
   useEffect(() => {
-    // Check for existing session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
@@ -101,7 +96,6 @@ function AppContent() {
       setLoading(false);
     });
 
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
@@ -122,54 +116,47 @@ function AppContent() {
 
   if (!fontsLoaded || loading) return null;
 
-  // Show auth screen if not logged in
+  const statusStyle = scheme === 'dark' ? 'light' : 'dark';
+
   if (!session) {
     return (
-      <>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
+      <ThemeProvider>
+        <StatusBar style={statusStyle} />
         <AuthScreen />
-      </>
+      </ThemeProvider>
     );
   }
 
-  // Show terms screen if logged in but hasn't accepted terms
   if (needsTerms) {
     return (
-      <>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
+      <ThemeProvider>
+        <StatusBar style={statusStyle} />
         <TermsScreen onAccepted={() => setNeedsTerms(false)} />
-      </>
+      </ThemeProvider>
     );
   }
 
-  // Show onboarding if they accepted terms but haven't met Buddy yet
   if (needsOnboarding) {
     return (
-      <>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
+      <ThemeProvider>
+        <StatusBar style={statusStyle} />
         <OnboardingScreen onComplete={() => setNeedsOnboarding(false)} />
-      </>
+      </ThemeProvider>
     );
   }
 
   return (
-    <BuddyProvider>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="case/add" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="case/[id]" options={{ presentation: 'card' }} />
-        <Stack.Screen name="call-coach" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="terms" options={{ presentation: 'modal' }} />
-      </Stack>
-    </BuddyProvider>
-  );
-}
-
-export default function RootLayout() {
-  return (
     <ThemeProvider>
-      <AppContent />
+      <BuddyProvider>
+        <StatusBar style={statusStyle} />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="case/add" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="case/[id]" options={{ presentation: 'card' }} />
+          <Stack.Screen name="call-coach" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="terms" options={{ presentation: 'modal' }} />
+        </Stack>
+      </BuddyProvider>
     </ThemeProvider>
   );
 }

@@ -8,10 +8,12 @@ export { colors, typography, springs, timing, scales, radii };
 
 export function useTheme() {
   const systemScheme = useColorScheme();
-  const themeCtx = useThemeMode();
+  const themeMode = useThemeMode();
+  
+  const isDark = themeMode.mode !== 'auto'
+    ? themeMode.mode === 'dark'
+    : systemScheme === 'dark';
 
-  // Use context if available, otherwise fall back to system
-  const isDark = themeCtx ? themeCtx.isDark : (systemScheme === 'dark');
   const c = isDark ? colors.dark : colors.light;
 
   return {
