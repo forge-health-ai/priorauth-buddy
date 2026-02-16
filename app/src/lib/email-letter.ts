@@ -29,9 +29,10 @@ export async function emailLetterToSelf(
     const encodedBody = encodeURIComponent(body);
     const mailtoUrl = `mailto:${email}?subject=${encodedSubject}&body=${encodedBody}`;
 
-    // On web, window.open; on mobile, Linking
-    if (typeof window !== 'undefined' && window.open) {
-      window.open(mailtoUrl, '_blank');
+    // On web, use location.href for mailto (window.open creates blank tab)
+    // On mobile, use Linking
+    if (typeof window !== 'undefined') {
+      window.location.href = mailtoUrl;
     } else {
       const { Linking } = require('react-native');
       await Linking.openURL(mailtoUrl);

@@ -17,6 +17,7 @@ import { getUserBuddyStats, getBuddyRank, checkRankUp } from '../../src/lib/budd
 import { RankUpCelebration } from '../../src/components/RankUpCelebration';
 import { getSubscriptionStatus } from '../../src/lib/subscription';
 import { BuddyRank } from '../../src/lib/buddy-evolution';
+import { useBuddy } from '../../src/context/BuddyContext';
 
 interface CaseEvent {
   id: string;
@@ -40,6 +41,7 @@ export default function CaseDetailScreen() {
   const { colors, typography } = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const { refresh: refreshBuddy } = useBuddy();
   const [caseData, setCaseData] = useState<Case | null>(null);
   const [events, setEvents] = useState<CaseEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,6 +157,9 @@ export default function CaseDetailScreen() {
           title: 'Appeal Letter Generated',
           description: 'AI appeal letter generated and saved',
         }).then(() => {});
+
+        // Refresh Buddy evolution (filing appeals changes rank)
+        refreshBuddy();
       }
     } catch (error) {
       console.error('Appeal generation error:', error);
@@ -453,6 +458,8 @@ export default function CaseDetailScreen() {
                           denials: (await supabase.from('cases').select('*', { count: 'exact', head: true }).eq('status', 'denied')).count ?? 0,
                         });
                       }
+                      // Refresh global Buddy context so all screens update
+                      await refreshBuddy();
                     } catch (e) {
                       console.error('Rank check error:', e);
                     }
