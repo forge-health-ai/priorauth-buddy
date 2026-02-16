@@ -13,6 +13,10 @@ import { supabase, Case } from '../../src/lib/supabase';
 import { generateAppealLetter, generateDOIComplaint, analyzeDenialLetter, DenialAnalysis } from '../../src/lib/ai';
 import { emailLetterToSelf } from '../../src/lib/email-letter';
 import { submitAnonymousOutcome } from '../../src/lib/outcome-tracking';
+import { getUserBuddyStats, getBuddyRank, checkRankUp } from '../../src/lib/buddy-evolution';
+import { RankUpCelebration } from '../../src/components/RankUpCelebration';
+import { getSubscriptionStatus } from '../../src/lib/subscription';
+import { BuddyRank } from '../../src/lib/buddy-evolution';
 
 interface CaseEvent {
   id: string;
@@ -49,6 +53,8 @@ export default function CaseDetailScreen() {
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [appealLetter, setAppealLetter] = useState<string | null>(null);
   const [complaintLetter, setComplaintLetter] = useState<string | null>(null);
+  const [rankUpData, setRankUpData] = useState<{ rank: BuddyRank; wins: number; denials: number } | null>(null);
+  const [isPro, setIsPro] = useState(false);
 
   useEffect(() => {
     fetchCaseDetails();
@@ -432,6 +438,26 @@ export default function CaseDetailScreen() {
                     });
                   }
 
+                  // Check for rank-up on win
+                  if (opt.status === 'approved') {
+                    try {
+                      const oldStats = await getUserBuddyStats();
+                      const newStats = { ...oldStats, wins: oldStats.wins + 1 };
+                      const newRank = checkRankUp(oldStats, newStats);
+                      const sub = await getSubscriptionStatus();
+                      setIsPro(sub.tier === 'pro');
+                      if (newRank) {
+                        setRankUpData({
+                          rank: newRank,
+                          wins: newStats.wins,
+                          denials: (await supabase.from('cases').select('*', { count: 'exact', head: true }).eq('status', 'denied')).count ?? 0,
+                        });
+                      }
+                    } catch (e) {
+                      console.error('Rank check error:', e);
+                    }
+                  }
+
                   // Show overlay for each outcome
                   if (opt.status === 'approved') {
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -649,8 +675,19 @@ export default function CaseDetailScreen() {
           )}
         </Animated.View>
       </ScrollView>
+      {/* Rank-Up Celebration Overlay */}
+      {rankUpData && (
+        <RankUpCelebration
+          rank={rankUpData.rank}
+          wins={rankUpData.wins}
+          denials={rankUpData.denials}
+          isPro={isPro}
+          onDismiss={() => setRankUpData(null)}
+        />
+      )}
+
       {/* Outcome Overlay */}
-      {showCelebration && (
+      {showCelebration && !rankUpData && (
         <Pressable onPress={() => setShowCelebration(null)} style={{
           position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', zIndex: 100,

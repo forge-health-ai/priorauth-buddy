@@ -11,9 +11,13 @@ import { FORGEButton } from '../../src/components/FORGEButton';
 import { EmptyState } from '../../src/components/EmptyState';
 import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { CaseCard } from '../../src/components/CaseCard';
+import { RankProgressCard } from '../../src/components/RankProgressCard';
+import { BuddyWinBadges } from '../../src/components/BuddyWinBadges';
 import { supabase, Case } from '../../src/lib/supabase';
 import { generateAlerts, BuddyAlert } from '../../src/lib/buddy-alerts';
 import { BuddyAlertCard } from '../../src/components/BuddyAlertCard';
+import { getUserBuddyStats, getBuddyRank, UserBuddyStats } from '../../src/lib/buddy-evolution';
+import { getSubscriptionStatus } from '../../src/lib/subscription';
 
 function getGreeting(name?: string): string {
   const hour = new Date().getHours();
@@ -39,6 +43,10 @@ export default function HomeScreen() {
   const [fightScore, setFightScore] = useState(0);
   const [userName, setUserName] = useState<string>('');
   const [alerts, setAlerts] = useState<BuddyAlert[]>([]);
+  const [buddyStats, setBuddyStats] = useState<UserBuddyStats>({ appealsFiled: 0, wins: 0, insurersBeaten: [] });
+  const [isPro, setIsPro] = useState(false);
+
+  const rank = getBuddyRank(buddyStats);
 
   const fetchCases = useCallback(async () => {
     try {
@@ -72,16 +80,23 @@ export default function HomeScreen() {
       setCases(casesData);
       setAlerts(generateAlerts(casesData));
 
-      // Calculate fight score based on case activity
-      // More active cases, appeals, and escalations = higher score
+      // Calculate fight score
       let score = 0;
       casesData.forEach(c => {
-        score += 10; // Base points for each case
+        score += 10;
         if (c.status === 'appealing' || c.status === 'escalated') score += 20;
         if (c.status === 'complaint_filed') score += 30;
         if (c.status === 'appeal_won') score += 50;
       });
-      setFightScore(Math.min(score, 100)); // Cap at 100
+      setFightScore(Math.min(score, 100));
+
+      // Fetch buddy evolution stats
+      const stats = await getUserBuddyStats();
+      setBuddyStats(stats);
+
+      // Check subscription
+      const sub = await getSubscriptionStatus();
+      setIsPro(sub.tier === 'pro');
     } catch (error) {
       console.error('Error fetching cases:', error);
     } finally {
@@ -128,12 +143,6 @@ export default function HomeScreen() {
   const deniedCount = cases.filter(c => c.status === 'denied').length;
   const wonCount = cases.filter(c => c.status === 'appeal_won' || c.status === 'approved').length;
 
-  // Find urgent cases (deadline within 7 days)
-  const urgentCases = cases.filter(c => {
-    const days = getDaysRemaining(c.appeal_deadline);
-    return days !== undefined && days <= 7 && days >= 0 && (c.status === 'pending' || c.status === 'denied' || c.status === 'appealing');
-  });
-
   if (cases.length === 0 && !loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -163,12 +172,25 @@ export default function HomeScreen() {
         </View>
 
         <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.buddySection}>
-          <BuddyMascot mood="happy" size={120} />
+          <BuddyMascot mood="happy" size={120} rank={rank} isPro={isPro} />
+          <Text style={[typography.body, { color: colors.textSecondary, fontStyle: 'italic', textAlign: 'center', paddingHorizontal: 20 }]}>
+            "{rank.quote}"
+          </Text>
           <View style={styles.scoreContainer}>
             <Text style={[typography.display, { color: colors.primary }]}>{fightScore}</Text>
             <Text style={[typography.caption, { color: colors.textSecondary }]}>Fight Score</Text>
           </View>
         </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(150).springify()}>
+          <RankProgressCard stats={buddyStats} />
+        </Animated.View>
+
+        {buddyStats.insurersBeaten.length > 0 && (
+          <Animated.View entering={FadeInDown.delay(175).springify()}>
+            <BuddyWinBadges insurersBeaten={buddyStats.insurersBeaten} />
+          </Animated.View>
+        )}
 
         <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.statsRow}>
           <StatCard label="Pending" value={String(pendingCount)} color={colors.warning} bgColor={colors.surface} />
@@ -225,12 +247,12 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 100 },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 100, gap: 16 },
   centeredHeader: { alignItems: 'center', paddingTop: 16, paddingBottom: 12, gap: 4 },
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, gap: 4 },
   buddySection: { alignItems: 'center', paddingVertical: 20, gap: 8 },
   scoreContainer: { alignItems: 'center' },
-  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
+  statsRow: { flexDirection: 'row', gap: 12 },
   statCard: {
     flex: 1, borderRadius: radii.card, padding: 16, alignItems: 'center', gap: 4,
     shadowColor: 'rgba(0,0,0,0.06)', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 8, elevation: 2,
@@ -239,7 +261,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.card, padding: 16, gap: 6, marginBottom: 16,
     borderWidth: 1, borderColor: 'rgba(255, 59, 92, 0.15)',
   },
-  recentCasesSection: { marginBottom: 16 },
+  recentCasesSection: {},
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   caseCardWrapper: { marginBottom: 12 },
   actions: { gap: 12 },

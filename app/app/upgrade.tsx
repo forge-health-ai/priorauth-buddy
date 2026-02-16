@@ -41,7 +41,7 @@ export default function UpgradeScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.springify()} style={styles.heroSection}>
-          <BuddyMascot mood="excited" size={90} />
+          <BuddyMascot mood="excited" size={90} isPro={true} />
           <Text style={[typography.h1, { color: colors.text, textAlign: 'center' }]}>Upgrade to Pro</Text>
           <Text style={[typography.body, { color: colors.textSecondary, textAlign: 'center' }]}>
             Your insurance company has a full team working against you. Level up your fight.

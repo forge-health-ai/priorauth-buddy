@@ -10,6 +10,12 @@ import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { FORGEButton } from '../../src/components/FORGEButton';
 import { supabase } from '../../src/lib/supabase';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { getUserBuddyStats, getBuddyRank, UserBuddyStats } from '../../src/lib/buddy-evolution';
+import { RankProgressCard } from '../../src/components/RankProgressCard';
+import { BuddyWinBadges } from '../../src/components/BuddyWinBadges';
+import { ShareCard } from '../../src/components/ShareCard';
+import { shareRankAchievement } from '../../src/lib/share-card';
+import { getSubscriptionStatus } from '../../src/lib/subscription';
 
 function SettingRow({ label, value, onPress }: { label: string; value?: string; onPress?: () => void }) {
   const { colors, typography } = useTheme();
@@ -32,6 +38,8 @@ export default function ProfileScreen() {
     calls: 0,
     wins: 0,
   });
+  const [buddyStats, setBuddyStats] = useState<UserBuddyStats>({ appealsFiled: 0, wins: 0, insurersBeaten: [] });
+  const [isPro, setIsPro] = useState(false);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -71,6 +79,13 @@ export default function ProfileScreen() {
           wins: winsCount ?? 0,
         });
       }
+
+      // Fetch buddy evolution stats
+      const bStats = await getUserBuddyStats();
+      setBuddyStats(bStats);
+
+      const sub = await getSubscriptionStatus();
+      setIsPro(sub.tier === 'pro');
     } catch (error) {
       console.error('Error fetching user data:', error);
     }
@@ -144,6 +159,21 @@ export default function ProfileScreen() {
               </View>
             ))}
           </View>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(150).springify()} style={{ marginTop: 16, gap: 12 }}>
+          <RankProgressCard stats={buddyStats} />
+          {buddyStats.insurersBeaten.length > 0 && (
+            <BuddyWinBadges insurersBeaten={buddyStats.insurersBeaten} />
+          )}
+          <FORGEButton
+            title="Share My Rank"
+            onPress={() => {
+              const rank = getBuddyRank(buddyStats);
+              shareRankAchievement(rank, buddyStats.wins, stats.cases - buddyStats.wins);
+            }}
+            variant="secondary"
+          />
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).springify()}>
