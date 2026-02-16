@@ -107,11 +107,20 @@ export default function CasesScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <MiniBuddy mood="thinking" size={24} />
-          <Text style={[typography.caption, { color: colors.textSecondary }]}>PriorAuth Buddy</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <View>
+            <Text style={[typography.caption, { color: colors.textSecondary }]}>PriorAuth Buddy</Text>
+            <Text style={[typography.h1, { color: colors.text }]}>Cases</Text>
+          </View>
+          <Pressable
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/case/add'); }}
+            style={{ marginTop: 4 }}
+          >
+            <LinearGradient colors={[colors.primary, colors.primaryEnd]} style={{ width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 24, color: '#FFFFFF', fontWeight: '300', marginTop: -2 }}>+</Text>
+            </LinearGradient>
+          </Pressable>
         </View>
-        <Text style={[typography.h1, { color: colors.text }]}>Cases</Text>
       </View>
 
       {cases.length === 0 && !loading ? (
@@ -147,7 +156,6 @@ export default function CasesScreen() {
         </ScrollView>
       )}
 
-      <FAB onPress={() => router.push('/case/add')} />
     </SafeAreaView>
   );
 }
