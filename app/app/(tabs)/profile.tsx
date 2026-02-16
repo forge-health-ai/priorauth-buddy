@@ -160,9 +160,9 @@ export default function ProfileScreen() {
             </View>
             <SettingRow label="Upgrade to Pro" value="$4.99/mo" onPress={() => router.push('/upgrade')} />
             <SettingRow label="Account" value={userEmail || 'Signed In'} />
-            <SettingRow label="Help & Support" />
-            <SettingRow label="Privacy Policy" />
-            <SettingRow label="Terms of Service" />
+            <SettingRow label="Help & Support" onPress={() => router.push('/help')} />
+            <SettingRow label="Privacy Policy" onPress={() => router.push('/privacy')} />
+            <SettingRow label="Terms of Service" onPress={() => router.push('/terms-of-service')} />
           </View>
         </Animated.View>
 
