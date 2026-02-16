@@ -266,7 +266,7 @@ export default function AppealsScreen() {
         <Text style={[typography.body, { color: colors.textSecondary }]}>AI-powered appeal letters that win</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.formContent} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.formContent, savedAppeals.length === 0 && !loading && { flexGrow: 1 }]} showsVerticalScrollIndicator={false}>
         {/* Saved Appeals */}
         {savedAppeals.length === 0 && !loading ? (
           <EmptyState
