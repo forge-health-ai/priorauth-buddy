@@ -171,7 +171,7 @@ export default function AppealsScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.buttonRow}>
-            <FORGEButton title="Email to Myself" onPress={() => emailLetterToSelf(`Appeal Letter - ${selectedAppeal.procedure_name}`, selectedAppeal.letter_text)} />
+            <FORGEButton title="Copy to Clipboard" onPress={() => emailLetterToSelf(`Appeal Letter - ${selectedAppeal.procedure_name}`, selectedAppeal.letter_text)} />
             <FORGEButton title="Copy / Share" onPress={() => Share.share({ title: 'Appeal Letter', message: selectedAppeal.letter_text })} variant="secondary" />
             <FORGEButton title="New Appeal" onPress={() => { setView('form'); setSelectedAppeal(null); setSelectedCaseId(''); setAdditionalContext(''); }} variant="secondary" />
           </Animated.View>

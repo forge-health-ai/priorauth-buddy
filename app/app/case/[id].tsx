@@ -519,7 +519,7 @@ export default function CaseDetailScreen() {
               <Text style={[typography.body, { color: colors.text }]} selectable>{appealLetter}</Text>
             </ScrollView>
             <View style={styles.letterActions}>
-              <FORGEButton title="Email to Myself" onPress={() => emailLetterToSelf(`Appeal Letter - ${caseData.procedure_name}`, appealLetter!)} />
+              <FORGEButton title="Copy to Clipboard" onPress={() => emailLetterToSelf(`Appeal Letter - ${caseData.procedure_name}`, appealLetter!)} />
               <FORGEButton title="Copy / Share" onPress={() => Share.share({ title: 'Appeal Letter', message: appealLetter })} variant="secondary" />
             </View>
           </Animated.View>
@@ -538,7 +538,7 @@ export default function CaseDetailScreen() {
               <Text style={[typography.body, { color: colors.text }]} selectable>{complaintLetter}</Text>
             </ScrollView>
             <View style={styles.letterActions}>
-              <FORGEButton title="Email to Myself" onPress={() => emailLetterToSelf(`DOI Complaint - ${caseData.procedure_name}`, complaintLetter!)} />
+              <FORGEButton title="Copy to Clipboard" onPress={() => emailLetterToSelf(`DOI Complaint - ${caseData.procedure_name}`, complaintLetter!)} />
               <FORGEButton title="Copy / Share" onPress={() => Share.share({ title: 'DOI Complaint', message: complaintLetter })} variant="secondary" />
             </View>
           </Animated.View>
