@@ -42,6 +42,16 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank: rankPro
   const shieldColor = rank?.shieldColor ?? '#FF6B35';
   const accentColor = rank?.accentColor ?? '#F7931E';
 
+  // Tier helpers for visual logic (must be before useEffect/render that reference them)
+  const tier = rank?.tier ?? 0;
+  const hasRedTrim = rankName === 'Warrior';
+  const hasGoldTrim = tier >= 4 && tier <= 5;
+  const hasPlatinumTrim = tier >= 6;
+  const hasStar = tier >= 5;
+  const hasDualStars = tier >= 6;
+  const hasCrown = rankName === 'Legend';
+  const hasGlow = tier >= 5;
+
   // Blink every 3-5 seconds (randomized for natural feel)
   useEffect(() => {
     if (mood === 'sleeping' || mood === 'celebrating') return;
@@ -277,16 +287,6 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank: rankPro
         return <Path d={`M${mx - w} ${my} Q${mx} ${my + w * 0.8} ${mx + w} ${my}`} stroke={eyeColor} strokeWidth={2.5} fill="none" strokeLinecap="round" />;
     }
   };
-
-  // Tier helpers for visual logic
-  const tier = rank?.tier ?? 0;
-  const hasRedTrim = rankName === 'Warrior'; // red accent border
-  const hasGoldTrim = tier >= 4 && tier <= 5; // Champion + Veteran
-  const hasPlatinumTrim = tier >= 6; // Elite + Legend
-  const hasStar = tier >= 5; // Veteran+
-  const hasDualStars = tier >= 6; // Elite+
-  const hasCrown = rankName === 'Legend';
-  const hasGlow = tier >= 5; // Veteran+
 
   // Compute SVG dimensions with room for crown and glow
   const padding = isPro ? size * 0.2 : hasGlow ? size * 0.15 : 0;
