@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "ai.forgehealth.priorauthbuddy",
+      "bundleIdentifier": "com.forgehealthtech.priorauthbuddy",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -25,7 +25,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0F0F14"
       },
-      "package": "ai.forgehealth.priorauthbuddy",
+      "package": "com.forgehealthtech.priorauthbuddy",
       "edgeToEdgeEnabled": true
     },
     "web": {
