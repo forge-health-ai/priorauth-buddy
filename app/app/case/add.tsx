@@ -9,6 +9,7 @@ import { FORGEButton } from '../../src/components/FORGEButton';
 import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
 import { supabase } from '../../src/lib/supabase';
+import { createCase, createCaseEvent, CaseStatus, UrgencyLevel } from '../../src/lib/local-storage';
 import { getInsurerIntel, InsurerIntel } from '../../src/data/insurer-intel';
 
 const PROCEDURE_TYPES = [
@@ -98,47 +99,31 @@ export default function AddCaseScreen() {
       const appealDeadline = new Date();
       appealDeadline.setDate(appealDeadline.getDate() + 60); // 60 days from now as default
 
-      // Insert case into database
-      const { data: caseData, error: caseError } = await supabase
-        .from('cases')
-        .insert({
-          user_id: user.id,
-          procedure_name: form.procedureName,
-          procedure_code: form.procedureCode || null,
-          insurer_name: form.insurerName,
-          policy_number: form.policyNumber || null,
-          reference_number: form.referenceNumber || null,
-          provider_name: form.providerName || null,
-          status: form.denialReason ? 'denied' : 'pending',
-          denial_reason: form.denialReason || null,
-          denial_date: form.denialDate || null,
-          appeal_deadline: form.denialReason ? appealDeadline.toISOString() : null,
-          urgency: form.urgency,
-          notes: form.notes || null,
-          fight_score: 0,
-        })
-        .select()
-        .single();
+      // Use local storage instead of Supabase for PHI compliance
+      const caseData = await createCase(user.id, {
+        procedure_name: form.procedureName,
+        procedure_code: form.procedureCode || undefined,
+        insurer_name: form.insurerName,
+        policy_number: form.policyNumber || undefined,
+        reference_number: form.referenceNumber || undefined,
+        provider_name: form.providerName || undefined,
+        status: (form.denialReason ? 'denied' : 'pending') as CaseStatus,
+        denial_reason: form.denialReason || undefined,
+        denial_date: form.denialDate || undefined,
+        appeal_deadline: form.denialReason ? appealDeadline.toISOString() : undefined,
+        urgency: form.urgency as UrgencyLevel,
+        notes: form.notes || undefined,
+        fight_score: 0,
+      });
 
-      if (caseError) {
-        console.error('Case insert error:', caseError);
-        Alert.alert('Error', 'Failed to save case. Please try again.');
-        setSaving(false);
-        return;
-      }
-
-      // Create initial case event
-      await supabase
-        .from('case_events')
-        .insert({
-          case_id: caseData.id,
-          user_id: user.id,
-          event_type: form.denialReason ? 'denial_received' : 'case_created',
-          title: form.denialReason ? 'Denial Received' : 'Case Created',
-          description: form.denialReason 
-            ? `Denial received: ${form.denialReason.substring(0, 100)}...`
-            : 'Case created and tracking started',
-        });
+      // Create initial case event in local storage
+      await createCaseEvent(caseData.id, user.id, {
+        event_type: form.denialReason ? 'denial_received' : 'case_created',
+        title: form.denialReason ? 'Denial Received' : 'Case Created',
+        description: form.denialReason 
+          ? `Denial received: ${form.denialReason.substring(0, 100)}...`
+          : 'Case created and tracking started',
+      });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
@@ -148,7 +133,7 @@ export default function AddCaseScreen() {
       );
     } catch (error) {
       console.error('Submit error:', error);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      Alert.alert('Error', 'Failed to save case. Please try again.');
     } finally {
       setSaving(false);
     }

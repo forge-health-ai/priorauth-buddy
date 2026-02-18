@@ -7,30 +7,27 @@ import { useTheme, radii } from '../../src/theme';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
 import { FORGEButton } from '../../src/components/FORGEButton';
 import { EmptyState } from '../../src/components/EmptyState';
-import { supabase, Case } from '../../src/lib/supabase';
+import { supabase } from '../../src/lib/supabase';
+import { getCases, getAllAppeals, createAppeal, createCaseEvent, updateCase, Case } from '../../src/lib/local-storage';
 import { generateAppealLetter } from '../../src/lib/ai';
 import { emailLetterToSelf } from '../../src/lib/email-letter';
 import { useFocusEffect } from 'expo-router';
 
-interface SavedAppeal {
-  id: string;
-  letter_text: string;
-  created_at: string;
-  case_id: string;
-  procedure_name?: string;
-  insurer_name?: string;
-  document_type?: string;
-}
+// SavedAppeal type is now imported from local-storage (LocalAppeal with enriched fields)
+import { LocalAppeal } from '../../src/lib/local-storage';
+
+// Enriched appeal type with case details
+type EnrichedAppeal = LocalAppeal & { procedure_name?: string; insurer_name?: string };
 
 export default function AppealsScreen() {
   const { colors, typography } = useTheme();
   const [view, setView] = useState<'list' | 'form' | 'detail'>('list');
-  const [savedAppeals, setSavedAppeals] = useState<SavedAppeal[]>([]);
+  const [savedAppeals, setSavedAppeals] = useState<EnrichedAppeal[]>([]);
   const [cases, setCases] = useState<Case[]>([]);
   const [selectedCaseId, setSelectedCaseId] = useState<string>('');
   const [additionalContext, setAdditionalContext] = useState('');
   const [generating, setGenerating] = useState(false);
-  const [selectedAppeal, setSelectedAppeal] = useState<SavedAppeal | null>(null);
+  const [selectedAppeal, setSelectedAppeal] = useState<EnrichedAppeal | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -38,31 +35,12 @@ export default function AppealsScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch saved appeals and complaints
-      const { data: appeals } = await supabase
-        .from('appeals')
-        .select('id, letter_text, created_at, case_id, document_type')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      // Fetch saved appeals and cases from local storage (PHI compliance)
+      const allAppeals = await getAllAppeals(user.id);
+      const allCases = await getCases(user.id);
 
-      // Fetch cases for cross-referencing
-      const { data: casesData } = await supabase
-        .from('cases')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      const caseMap: Record<string, Case> = {};
-      (casesData || []).forEach(c => { caseMap[c.id] = c; });
-
-      const enrichedAppeals = (appeals || []).map(a => ({
-        ...a,
-        procedure_name: caseMap[a.case_id]?.procedure_name || 'Unknown Case',
-        insurer_name: caseMap[a.case_id]?.insurer_name || '',
-      }));
-
-      setSavedAppeals(enrichedAppeals);
-      setCases((casesData || []).filter(c => c.status === 'denied' || c.status === 'appealing'));
+      setSavedAppeals(allAppeals);
+      setCases(allCases.filter(c => c.status === 'denied' || c.status === 'appealing'));
     } catch (error) {
       console.error('Error fetching appeals data:', error);
     } finally {
@@ -98,37 +76,37 @@ export default function AppealsScreen() {
         patientContext: additionalContext,
       });
 
-      // Show result immediately
-      const newAppeal: SavedAppeal = {
-        id: Date.now().toString(),
+      // Save appeal to local storage first (PHI compliance)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        Alert.alert('Error', 'You must be signed in');
+        setGenerating(false);
+        return;
+      }
+
+      const newAppeal = await createAppeal(selectedCase.id, user.id, {
         letter_text: result.letter,
-        created_at: new Date().toISOString(),
-        case_id: selectedCase.id,
+        document_type: 'appeal',
+      });
+
+      await updateCase(selectedCase.id, user.id, { status: 'appealing' });
+      await createCaseEvent(selectedCase.id, user.id, {
+        event_type: 'appeal_generated',
+        title: 'Appeal Letter Generated',
+        description: 'AI appeal letter generated via Appeals tab',
+      });
+
+      // Show result with enriched data
+      setSelectedAppeal({
+        ...newAppeal,
         procedure_name: selectedCase.procedure_name,
         insurer_name: selectedCase.insurer_name,
-      };
-      setSelectedAppeal(newAppeal);
+      });
       setView('detail');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      // Save to DB non-blocking
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        supabase.from('appeals').insert({
-          case_id: selectedCase.id,
-          user_id: user.id,
-          letter_text: result.letter,
-        }).then(() => fetchData());
-
-        supabase.from('cases').update({ status: 'appealing' }).eq('id', selectedCase.id).then(() => {});
-        supabase.from('case_events').insert({
-          case_id: selectedCase.id,
-          user_id: user.id,
-          event_type: 'appeal_generated',
-          title: 'Appeal Letter Generated',
-          description: 'AI appeal letter generated via Appeals tab',
-        }).then(() => {});
-      }
+      // Refresh the list
+      fetchData();
     } catch (error) {
       console.error('Appeal generation error:', error);
       Alert.alert('Error', 'Failed to generate appeal letter. Please try again.');

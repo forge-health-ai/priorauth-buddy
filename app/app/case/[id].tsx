@@ -9,7 +9,16 @@ import { useTheme, radii } from '../../src/theme';
 import { FORGEButton } from '../../src/components/FORGEButton';
 import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
-import { supabase, Case } from '../../src/lib/supabase';
+import { supabase } from '../../src/lib/supabase';
+import { 
+  getCase, 
+  getCaseEvents, 
+  createCaseEvent, 
+  createAppeal, 
+  updateCase,
+  Case, 
+  CaseEvent 
+} from '../../src/lib/local-storage';
 import { generateAppealLetter, generateDOIComplaint, analyzeDenialLetter, DenialAnalysis } from '../../src/lib/ai';
 import { emailLetterToSelf } from '../../src/lib/email-letter';
 import { submitAnonymousOutcome } from '../../src/lib/outcome-tracking';
@@ -27,12 +36,7 @@ function isOutcomeSelected(caseStatus: string, optStatus: string): boolean {
   return false;
 }
 
-interface CaseEvent {
-  id: string;
-  event_type: string;
-  description: string;
-  created_at: string;
-}
+// CaseEvent type is now imported from local-storage
 
 const statusConfig: Record<string, { label: string; color: string; emoji: string }> = {
   pending: { label: 'Pending', color: '#F59E0B', emoji: '⏳' },
@@ -75,16 +79,11 @@ export default function CaseDetailScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch case
-      const { data: caseItem, error: caseError } = await supabase
-        .from('cases')
-        .select('*')
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
-
-      if (caseError) {
-        console.error('Fetch case error:', caseError);
+      // Fetch case from local storage (PHI compliance)
+      const caseItem = await getCase(id as string, user.id);
+      if (!caseItem) {
+        console.error('Case not found');
+        setLoading(false);
         return;
       }
 
@@ -108,16 +107,9 @@ export default function CaseDetailScreen() {
         }
       }
 
-      // Fetch events
-      const { data: eventsData, error: eventsError } = await supabase
-        .from('case_events')
-        .select('*')
-        .eq('case_id', id)
-        .order('created_at', { ascending: false });
-
-      if (!eventsError) {
-        setEvents(eventsData || []);
-      }
+      // Fetch events from local storage
+      const eventsData = await getCaseEvents(id as string);
+      setEvents(eventsData);
     } catch (error) {
       console.error('Error fetching case details:', error);
     } finally {
@@ -147,24 +139,21 @@ export default function CaseDetailScreen() {
       // Show appeal letter inline FIRST
       setAppealLetter(result.letter);
 
-      // Save appeal to database (non-blocking)
+      // Save appeal to local storage (PHI compliance)
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        supabase.from('appeals').insert({
-          case_id: caseData.id,
-          user_id: user.id,
+        await createAppeal(caseData.id, user.id, {
           letter_text: result.letter,
-        }).then(() => {});
+          document_type: 'appeal',
+        });
 
-        supabase.from('cases').update({ status: 'appealing' }).eq('id', caseData.id).then(() => {});
+        await updateCase(caseData.id, user.id, { status: 'appealing' });
 
-        supabase.from('case_events').insert({
-          case_id: caseData.id,
-          user_id: user.id,
+        await createCaseEvent(caseData.id, user.id, {
           event_type: 'appeal_generated',
           title: 'Appeal Letter Generated',
           description: 'AI appeal letter generated and saved',
-        }).then(() => {});
+        });
 
         // Refresh Buddy evolution (filing appeals changes rank)
         refreshBuddy();
@@ -196,23 +185,19 @@ export default function CaseDetailScreen() {
       // Show complaint inline FIRST
       setComplaintLetter(result.complaint);
 
-      // Save to database (non-blocking) - store in appeals table with document_type = 'complaint'
+      // Save to local storage (PHI compliance)
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        supabase.from('appeals').insert({
-          case_id: caseData.id,
-          user_id: user.id,
+        await createAppeal(caseData.id, user.id, {
           letter_text: result.complaint,
           document_type: 'complaint',
-        }).then(() => {});
-        supabase.from('cases').update({ status: 'complaint_filed' }).eq('id', caseData.id).then(() => {});
-        supabase.from('case_events').insert({
-          case_id: caseData.id,
-          user_id: user.id,
+        });
+        await updateCase(caseData.id, user.id, { status: 'complaint_filed' });
+        await createCaseEvent(caseData.id, user.id, {
           event_type: 'complaint_filed',
           title: 'DOI Complaint Filed',
           description: 'DOI complaint generated and filed',
-        }).then(() => {});
+        });
       }
     } catch (error) {
       console.error('Complaint generation error:', error);
@@ -240,7 +225,7 @@ export default function CaseDetailScreen() {
       const result = await analyzeDenialLetter(denialText, caseData.insurer_name || undefined);
       setAnalysisResult(result);
       
-      // Save analysis to case notes
+      // Save analysis to case notes in local storage
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const analysisNote = `\n\n[AI Denial Analysis - ${new Date().toLocaleDateString()}]\n\nDenial Reason: ${result.denialReason}\n\nClinical Criteria: ${result.clinicalCriteria}\n\nTimeline: ${result.timeline}\n\nAppeal Angles:\n${result.appealAngles.map((a, i) => `${i + 1}. ${a}`).join('\n')}\n\nNext Steps: ${result.nextSteps}`;
@@ -249,18 +234,14 @@ export default function CaseDetailScreen() {
           ? caseData.notes + analysisNote
           : analysisNote;
         
-        await supabase
-          .from('cases')
-          .update({ notes: newNotes })
-          .eq('id', caseData.id);
+        // Update local storage
+        await updateCase(caseData.id, user.id, { notes: newNotes });
         
         // Update local state
         setCaseData(prev => prev ? { ...prev, notes: newNotes } : null);
         
-        // Add event
-        await supabase.from('case_events').insert({
-          case_id: caseData.id,
-          user_id: user.id,
+        // Add event to local storage
+        await createCaseEvent(caseData.id, user.id, {
           event_type: 'denial_analyzed',
           title: 'Denial Analysis Complete',
           description: 'AI denial letter analysis completed',
@@ -433,9 +414,12 @@ export default function CaseDetailScreen() {
                 key={opt.status}
                 onPress={async () => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  // Update case status (await so stats refresh sees new data)
+                  // Update case status in local storage (PHI compliance)
+                  const { data: { user } } = await supabase.auth.getUser();
                   const newStatus = opt.status === 'approved' ? 'approved' : opt.status === 'denied_final' ? 'denied' : 'appealing';
-                  await supabase.from('cases').update({ status: newStatus }).eq('id', caseData.id);
+                  if (user) {
+                    await updateCase(caseData.id, user.id, { status: newStatus });
+                  }
                   fetchCaseDetails();
 
                   // Submit anonymous outcome if won or lost

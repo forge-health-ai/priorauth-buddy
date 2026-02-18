@@ -9,7 +9,8 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { CaseCard } from '../../src/components/CaseCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { MiniBuddy } from '../../src/components/MiniBuddy';
-import { supabase, Case } from '../../src/lib/supabase';
+import { supabase } from '../../src/lib/supabase';
+import { getCases, Case } from '../../src/lib/local-storage';
 
 function FAB({ onPress }: { onPress: () => void }) {
   const { colors } = useTheme();
@@ -43,18 +44,9 @@ export default function CasesScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from('cases')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Fetch cases error:', error);
-        return;
-      }
-
-      setCases(data || []);
+      // Use local storage instead of Supabase for PHI compliance
+      const localCases = await getCases(user.id);
+      setCases(localCases);
     } catch (error) {
       console.error('Error fetching cases:', error);
     } finally {

@@ -13,7 +13,8 @@ import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { CaseCard } from '../../src/components/CaseCard';
 import { RankProgressCard } from '../../src/components/RankProgressCard';
 import { BuddyWinBadges } from '../../src/components/BuddyWinBadges';
-import { supabase, Case } from '../../src/lib/supabase';
+import { supabase } from '../../src/lib/supabase';
+import { getCases, Case } from '../../src/lib/local-storage';
 import { generateAlerts, BuddyAlert } from '../../src/lib/buddy-alerts';
 import { BuddyAlertCard } from '../../src/components/BuddyAlertCard';
 import { getUserBuddyStats, getBuddyRank, UserBuddyStats } from '../../src/lib/buddy-evolution';
@@ -66,7 +67,7 @@ export default function HomeScreen() {
       }
       const user = { id: userId };
 
-      // Fetch user's display name
+      // Fetch user's display name from Supabase (non-PHI)
       const { data: profile } = await supabase
         .from('profiles')
         .select('display_name')
@@ -74,18 +75,8 @@ export default function HomeScreen() {
         .single();
       if (profile?.display_name) setUserName(profile.display_name);
 
-      const { data, error } = await supabase
-        .from('cases')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Fetch cases error:', error);
-        return;
-      }
-
-      const casesData = data || [];
+      // Use local storage instead of Supabase for PHI compliance
+      const casesData = await getCases(user.id);
       setCases(casesData);
       setAlerts(generateAlerts(casesData));
 

@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
+import { getLocalStats } from './local-storage';
 
 export type RankName = 'Rookie' | 'Fighter' | 'Advocate' | 'Warrior' | 'Champion' | 'Veteran' | 'Elite' | 'Legend';
 
@@ -235,39 +236,20 @@ export async function getUserBuddyStats(): Promise<UserBuddyStats> {
         userId = session?.user?.id || null;
       } catch {}
     }
+    
     if (userId) {
-      const user = { id: userId };
-      const { data: cases } = await supabase
-        .from('cases')
-        .select('status, insurer_name')
-        .eq('user_id', user.id);
+      // Use local storage for PHI compliance - all case data is stored locally
+      const stats = await getLocalStats(userId);
+      
+      const userStats: UserBuddyStats = {
+        appealsFiled: stats.appealsFiled,
+        wins: stats.wins,
+        insurersBeaten: stats.insurersBeaten,
+      };
 
-      const { count: appealsCount } = await supabase
-        .from('appeals')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-
-      if (cases) {
-        const wins = cases.filter(c => c.status === 'approved' || c.status === 'appeal_won').length;
-        const insurersBeaten = [
-          ...new Set(
-            cases
-              .filter(c => c.status === 'approved' || c.status === 'appeal_won')
-              .map(c => c.insurer_name)
-              .filter(Boolean)
-          ),
-        ];
-
-        const stats: UserBuddyStats = {
-          appealsFiled: appealsCount ?? 0,
-          wins,
-          insurersBeaten,
-        };
-
-        // Cache locally
-        await AsyncStorage.setItem(STATS_KEY, JSON.stringify(stats));
-        return stats;
-      }
+      // Cache locally
+      await AsyncStorage.setItem(STATS_KEY, JSON.stringify(userStats));
+      return userStats;
     }
   } catch (e) {
     console.error('Error fetching buddy stats:', e);

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { getCaseCount } from './local-storage';
 
 export type SubscriptionTier = 'free' | 'pro';
 
@@ -28,7 +29,7 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
       return { tier: 'free', casesUsed: 0, casesLimit: FREE_CASE_LIMIT, canAddCase: true, canUseAI: false, canUseCallCoach: false };
     }
 
-    // Check profile for subscription status
+    // Check profile for subscription status (non-PHI)
     const { data: profile } = await supabase
       .from('profiles')
       .select('subscription_tier')
@@ -37,13 +38,8 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
 
     const tier: SubscriptionTier = profile?.subscription_tier === 'pro' ? 'pro' : 'free';
 
-    // Count cases
-    const { count } = await supabase
-      .from('cases')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
-
-    const casesUsed = count || 0;
+    // Count cases from local storage (PHI compliance)
+    const casesUsed = await getCaseCount(userId);
 
     if (tier === 'pro') {
       return { tier: 'pro', casesUsed, casesLimit: Infinity, canAddCase: true, canUseAI: true, canUseCallCoach: true };
