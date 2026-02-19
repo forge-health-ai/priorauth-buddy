@@ -11,6 +11,7 @@ import {
 } from '@expo-google-fonts/outfit';
 import * as SplashScreen from 'expo-splash-screen';
 import { supabase } from '../src/lib/supabase';
+import { initRevenueCat, identifyUser } from '../src/lib/revenuecat';
 import { BuddyProvider } from '../src/context/BuddyContext';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import AuthScreen from './auth';
@@ -88,10 +89,14 @@ export default function RootLayout() {
   };
 
   useEffect(() => {
+    // Initialize RevenueCat early (no-ops on web)
+    initRevenueCat();
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
         checkTermsAcceptance(session.user.id);
+        identifyUser(session.user.id);
       }
       setLoading(false);
     });
@@ -100,6 +105,7 @@ export default function RootLayout() {
       setSession(session);
       if (session?.user) {
         checkTermsAcceptance(session.user.id);
+        identifyUser(session.user.id);
       } else {
         setNeedsTerms(false);
       }

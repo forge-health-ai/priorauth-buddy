@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -7,7 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { useTheme, radii } from '../src/theme';
 import { BuddyMascot } from '../src/components/BuddyMascot';
 import { FORGEButton } from '../src/components/FORGEButton';
-import { MiniBuddy } from '../src/components/MiniBuddy';
+import { useBuddy } from '../src/context/BuddyContext';
 
 const FEATURES = [
   { icon: '📝', title: 'Unlimited AI Appeal Letters', desc: 'Tailored to your insurer\'s playbook' },
@@ -23,12 +23,46 @@ const FEATURES = [
 export default function UpgradeScreen() {
   const { colors, typography } = useTheme();
   const router = useRouter();
+  const { purchasePro, restorePurchases } = useBuddy();
+  const [loading, setLoading] = useState(false);
+  const [restoring, setRestoring] = useState(false);
 
   const handleSubscribe = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    // TODO: Integrate with RevenueCat / App Store subscriptions
-    // For now, show coming soon
-    alert('App Store subscription coming soon! During beta, all features are unlocked.');
+    setLoading(true);
+    try {
+      const result = await purchasePro();
+      if (result.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        router.replace('/(tabs)');
+      } else if (result.error && result.error !== 'cancelled') {
+        Alert.alert('Purchase Failed', result.error);
+      }
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setRestoring(true);
+    try {
+      const restored = await restorePurchases();
+      if (restored) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert('Restored!', 'Your Pro subscription has been restored.', [
+          { text: 'OK', onPress: () => router.replace('/(tabs)') },
+        ]);
+      } else {
+        Alert.alert('No Subscription Found', 'We couldn\'t find an active subscription for your account.');
+      }
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Restore failed');
+    } finally {
+      setRestoring(false);
+    }
   };
 
   return (
@@ -104,8 +138,21 @@ export default function UpgradeScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(600).springify()} style={styles.ctaSection}>
-          <FORGEButton title="Start Pro - $4.99/month" onPress={handleSubscribe} />
-          <Pressable onPress={() => router.back()} hitSlop={20} style={{ alignSelf: 'center', paddingTop: 12 }}>
+          {loading ? (
+            <ActivityIndicator size="large" color={colors.primary} style={{ paddingVertical: 16 }} />
+          ) : (
+            <FORGEButton title="Start Pro - $4.99/month" onPress={handleSubscribe} />
+          )}
+
+          <Pressable onPress={handleRestore} disabled={restoring} hitSlop={20} style={{ alignSelf: 'center', paddingTop: 12 }}>
+            {restoring ? (
+              <ActivityIndicator size="small" color={colors.textSecondary} />
+            ) : (
+              <Text style={[typography.caption, { color: colors.textSecondary }]}>Restore Purchases</Text>
+            )}
+          </Pressable>
+
+          <Pressable onPress={() => router.back()} hitSlop={20} style={{ alignSelf: 'center', paddingTop: 8 }}>
             <Text style={[typography.body, { color: colors.textSecondary }]}>Maybe later</Text>
           </Pressable>
         </Animated.View>
