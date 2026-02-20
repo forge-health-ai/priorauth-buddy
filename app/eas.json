@@ -13,9 +13,15 @@
         "simulator": false
       }
     },
-    "production": {}
+    "production": {
+      "autoIncrement": true
+    }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "s_m_murray@hotmail.com"
+      }
+    }
   }
 }

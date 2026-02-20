@@ -16,6 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.forgehealthtech.priorauthbuddy",
+      "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -36,7 +37,7 @@
       "expo-router",
       "expo-font",
       ["expo-build-properties", {
-        "ios": { "deploymentTarget": "15.0" }
+        "ios": { "deploymentTarget": "15.1" }
       }]
     ],
     "extra": {
