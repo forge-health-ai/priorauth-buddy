@@ -90,7 +90,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     // Initialize RevenueCat early (no-ops on web, non-blocking)
-    initRevenueCat().catch(() => {});
+    try { initRevenueCat().catch(() => {}); } catch (e) { console.warn('RevenueCat init error:', e); }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
