@@ -38,11 +38,6 @@
       "expo-font",
       ["expo-build-properties", {
         "ios": { "deploymentTarget": "15.1" }
-      }],
-      ["react-native-purchases", {
-        "ios": {
-          "StoreKit2Setting": "storeKit2"
-        }
       }]
     ],
     "extra": {
