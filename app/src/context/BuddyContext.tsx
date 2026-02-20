@@ -74,8 +74,8 @@ export function BuddyProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Initialize RevenueCat on mount
-    initRevenueCat().then(() => refresh());
+    // Initialize RevenueCat on mount (non-blocking — app works without it)
+    initRevenueCat().catch(() => {}).then(() => refresh().catch(() => {}));
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       refresh();

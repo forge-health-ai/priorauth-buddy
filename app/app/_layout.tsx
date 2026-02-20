@@ -89,8 +89,8 @@ export default function RootLayout() {
   };
 
   useEffect(() => {
-    // Initialize RevenueCat early (no-ops on web)
-    initRevenueCat();
+    // Initialize RevenueCat early (no-ops on web, non-blocking)
+    initRevenueCat().catch(() => {});
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
