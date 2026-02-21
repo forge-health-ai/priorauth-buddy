@@ -814,5 +814,5 @@ const styles = StyleSheet.create({
   letterSection: { marginHorizontal: 20, marginBottom: 16, borderRadius: 16, borderWidth: 1, padding: 16, gap: 12 },
   letterHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   letterContent: { maxHeight: 300 },
-  letterActions: { flexDirection: 'row', gap: 8 },
+  letterActions: { gap: 8 },
 });

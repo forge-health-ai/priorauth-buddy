@@ -148,10 +148,12 @@ export default function AppealsScreen() {
             </View>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.buttonRow}>
+          <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.buttonStack}>
             <FORGEButton title="Copy to Clipboard" onPress={() => emailLetterToSelf(`Appeal Letter`, selectedAppeal.letter_text)} />
-            <FORGEButton title="Share" onPress={() => Share.share({ title: 'Appeal Letter', message: selectedAppeal.letter_text })} variant="secondary" />
-            <FORGEButton title="New Appeal" onPress={() => { setView('form'); setSelectedAppeal(null); setSelectedCaseId(''); setAdditionalContext(''); }} variant="secondary" />
+            <View style={styles.buttonRow}>
+              <View style={{ flex: 1 }}><FORGEButton title="Share" onPress={() => Share.share({ title: 'Appeal Letter', message: selectedAppeal.letter_text })} variant="secondary" /></View>
+              <View style={{ flex: 1 }}><FORGEButton title="New Appeal" onPress={() => { setView('form'); setSelectedAppeal(null); setSelectedCaseId(''); setAdditionalContext(''); }} variant="secondary" /></View>
+            </View>
           </Animated.View>
         </ScrollView>
       </SafeAreaView>
@@ -347,7 +349,8 @@ const styles = StyleSheet.create({
   textArea: { minHeight: 100, paddingTop: 14 },
   letterBox: { borderWidth: 1, borderRadius: radii.card, padding: 20 },
   letterText: { fontFamily: 'Outfit_400Regular', fontSize: 14, lineHeight: 22 },
-  buttonRow: { flexDirection: 'row', gap: 12, marginTop: 16 },
+  buttonStack: { gap: 12, marginTop: 16 },
+  buttonRow: { flexDirection: 'row', gap: 12 },
   appealCard: { borderWidth: 1, borderRadius: radii.card, padding: 16 },
   appealCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   docIcon: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
