@@ -84,7 +84,7 @@ const STATE_DATA: Record<string, StateRightsData> = {
     externalReviewAvailable: true,
     doiName: 'PA Insurance Dept.',
     doiPhone: '1-877-881-6388',
-    doiWebsite: 'https://www.insurance.pa.gov',
+    doiWebsite: 'https://www.pa.gov/services/insurance',
     keyLaws: [
       'Act 68 (Quality Health Care Accountability)',
       'Right to external grievance review',
@@ -100,7 +100,7 @@ const STATE_DATA: Record<string, StateRightsData> = {
     doiPhone: '1-866-445-5364',
     doiWebsite: 'https://insurance.illinois.gov',
     keyLaws: [
-      'Insurance Code 215 ILCS 5/356z.25 (External Review)',
+      '215 ILCS 180 (Health Carrier External Review Act)',
       'HMO Act external review provisions',
       'Mandatory coverage for clinical trial costs',
     ],
