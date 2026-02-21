@@ -51,7 +51,7 @@ export default function PrivacyPolicyScreen() {
 
         <Section title="Who We Are" delay={50}>
           <Text style={bodyStyle}>
-            PriorAuth Buddy is operated by Forge Partners Inc., a company incorporated in Ontario, Canada. We built this app to help people navigate insurance prior authorization and appeals. This policy explains what data we collect, what we do not collect and how we protect your privacy.
+            PriorAuth Buddy is operated by Forge Partners Inc., a health technology company. We built this app to help people navigate insurance prior authorization and appeals. This policy explains what data we collect, what we do not collect and how we protect your privacy.
           </Text>
         </Section>
 

@@ -52,7 +52,7 @@ export default function TermsOfServiceScreen() {
 
         <Section number="1" title="Agreement to Terms" delay={50}>
           <Text style={bodyStyle}>
-            By downloading, accessing or using PriorAuth Buddy ("the App"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the App. These Terms constitute a legally binding agreement between you and Forge Partners Inc. ("we," "us," "our"), a company incorporated in Ontario, Canada.
+            By downloading, accessing or using PriorAuth Buddy ("the App"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the App. These Terms constitute a legally binding agreement between you and Forge Partners Inc. ("we," "us," "our"), a health technology company.
           </Text>
         </Section>
 
