@@ -16,6 +16,7 @@ import { BuddyWinBadges } from '../../src/components/BuddyWinBadges';
 import { ShareCard } from '../../src/components/ShareCard';
 import { shareRankAchievement } from '../../src/lib/share-card';
 import { getSubscriptionStatus } from '../../src/lib/subscription';
+import { EvolutionPath } from '../../src/components/EvolutionPath';
 
 function SettingRow({ label, value, onPress }: { label: string; value?: string; onPress?: () => void }) {
   const { colors, typography } = useTheme();
@@ -40,6 +41,7 @@ export default function ProfileScreen() {
   });
   const [buddyStats, setBuddyStats] = useState<UserBuddyStats>({ appealsFiled: 0, wins: 0, insurersBeaten: [] });
   const [isPro, setIsPro] = useState(false);
+  const [showEvolution, setShowEvolution] = useState(false);
   const { mode: appearanceMode, setMode: setAppearanceMode } = useThemeMode();
 
   const fetchUserData = useCallback(async () => {
@@ -128,7 +130,7 @@ export default function ProfileScreen() {
         </View>
 
         <Animated.View entering={FadeInDown.springify()}>
-          <Pressable onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}>
+          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/upgrade'); }}>
             <LinearGradient colors={['#8B5CF6', '#6D28D9']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.proCard}>
               <View style={styles.proContent}>
                 <BuddyMascot mood="celebrating" size={70} isPro={true} />
@@ -160,7 +162,7 @@ export default function ProfileScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(150).springify()} style={{ marginTop: 16, gap: 12 }}>
-          <RankProgressCard stats={buddyStats} />
+          <RankProgressCard stats={buddyStats} onPress={() => { Haptics.selectionAsync(); setShowEvolution(true); }} />
           {buddyStats.insurersBeaten.length > 0 && (
             <BuddyWinBadges insurersBeaten={buddyStats.insurersBeaten} />
           )}
@@ -227,6 +229,12 @@ export default function ProfileScreen() {
           <Text style={[typography.caption, { color: colors.textTertiary, textAlign: 'center' }]}>2026 Forge Partners Inc.</Text>
         </Animated.View>
       </ScrollView>
+
+      <EvolutionPath
+        visible={showEvolution}
+        currentRank={getBuddyRank(buddyStats)}
+        onClose={() => setShowEvolution(false)}
+      />
     </SafeAreaView>
   );
 }

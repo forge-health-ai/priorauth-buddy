@@ -20,6 +20,7 @@ import { BuddyAlertCard } from '../../src/components/BuddyAlertCard';
 import { getUserBuddyStats, getBuddyRank, UserBuddyStats } from '../../src/lib/buddy-evolution';
 import { getSubscriptionStatus } from '../../src/lib/subscription';
 import { useBuddy } from '../../src/context/BuddyContext';
+import { EvolutionPath } from '../../src/components/EvolutionPath';
 
 function getGreeting(name?: string): string {
   const hour = new Date().getHours();
@@ -45,6 +46,7 @@ export default function HomeScreen() {
   const [fightScore, setFightScore] = useState(0);
   const [userName, setUserName] = useState<string>('');
   const [alerts, setAlerts] = useState<BuddyAlert[]>([]);
+  const [showEvolution, setShowEvolution] = useState(false);
   const { rank, isPro, stats: buddyStats, refresh: refreshBuddy } = useBuddy();
 
   const fetchCases = useCallback(async () => {
@@ -178,7 +180,7 @@ export default function HomeScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(150).springify()}>
-          <RankProgressCard stats={buddyStats} />
+          <RankProgressCard stats={buddyStats} onPress={() => { Haptics.selectionAsync(); setShowEvolution(true); }} />
         </Animated.View>
 
         {buddyStats.insurersBeaten.length > 0 && (
@@ -236,6 +238,14 @@ export default function HomeScreen() {
           <FORGEButton title="Write Appeal" onPress={() => router.push('/(tabs)/appeals')} variant="secondary" />
         </Animated.View>
       </ScrollView>
+
+      {rank && (
+        <EvolutionPath
+          visible={showEvolution}
+          currentRank={rank}
+          onClose={() => setShowEvolution(false)}
+        />
+      )}
     </SafeAreaView>
   );
 }

@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useTheme, radii } from '../theme';
 import { BuddyRank, getNextRankProgress, FullStats } from '../lib/buddy-evolution';
 
 interface RankProgressCardProps {
   stats: FullStats;
+  onPress?: () => void;
 }
 
 const RANK_EMOJI: Record<string, string> = {
@@ -18,12 +19,15 @@ const RANK_EMOJI: Record<string, string> = {
   Legend: '👑',
 };
 
-export function RankProgressCard({ stats }: RankProgressCardProps) {
+export function RankProgressCard({ stats, onPress }: RankProgressCardProps) {
   const { colors, typography } = useTheme();
   const { current, next, progress, remaining } = getNextRankProgress(stats);
 
+  const Wrapper = onPress ? Pressable : View;
+  const wrapperProps = onPress ? { onPress } : {};
+
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface }]}>
+    <Wrapper {...wrapperProps} style={[styles.card, { backgroundColor: colors.surface }]}>
       <View style={styles.header}>
         <Text style={{ fontSize: 20 }}>{RANK_EMOJI[current.name]}</Text>
         <View style={{ flex: 1 }}>
@@ -57,7 +61,13 @@ export function RankProgressCard({ stats }: RankProgressCardProps) {
       {!next && (
         <Text style={[typography.caption, { color: '#FFD700' }]}>Max rank reached!</Text>
       )}
-    </View>
+
+      {onPress && (
+        <Text style={[typography.caption, { color: colors.primary, textAlign: 'center', marginTop: 2 }]}>
+          Tap to see all ranks →
+        </Text>
+      )}
+    </Wrapper>
   );
 }
 

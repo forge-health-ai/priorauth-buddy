@@ -13,11 +13,15 @@ async function getAuthToken(): Promise<string> {
   return session.access_token;
 }
 
+// API base URL — relative on web (Vercel), absolute on native
+import { Platform } from 'react-native';
+const API_BASE = Platform.OS === 'web' ? '' : 'https://priorauth-buddy.vercel.app';
+
 // Call the AI proxy API
 async function callAiproxy(action: string, payload: any): Promise<any> {
   const token = await getAuthToken();
   
-  const response = await fetch('/api/ai', {
+  const response = await fetch(`${API_BASE}/api/ai`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

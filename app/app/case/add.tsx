@@ -380,7 +380,7 @@ export default function AddCaseScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} style={{ flex: 1 }}>
         <View style={styles.header}>
           <Pressable onPress={() => step > 1 ? setStep((step - 1) as Step) : router.back()} hitSlop={20}>
             <Text style={[typography.body, { color: colors.primary }]}>{step > 1 ? '← Back' : '✕ Cancel'}</Text>

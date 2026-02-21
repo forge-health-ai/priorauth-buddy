@@ -149,23 +149,7 @@ export default function TermsScreen({ onAccepted }: TermsScreenProps) {
           </Pressable>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.termsList}>
-          <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: 12 }]}>
-            By using PriorAuth Buddy, you acknowledge:
-          </Text>
-          
-          {[
-            'This app provides educational information only',
-            'We are not lawyers, doctors, or insurance agents',
-            'You are responsible for your own insurance decisions',
-            'Always verify information with your insurer',
-          ].map((item, index) => (
-            <View key={index} style={styles.bulletPoint}>
-              <Text style={[typography.body, { color: colors.primary, marginRight: 8 }]}>•</Text>
-              <Text style={[typography.body, { color: colors.textSecondary }]}>{item}</Text>
-            </View>
-          ))}
-        </Animated.View>
+        {/* Acknowledgment tracked via checkbox + Supabase timestamp for audit */}
       </ScrollView>
 
       <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.footer}>
