@@ -430,6 +430,46 @@ export default function CaseDetailScreen() {
           )}
         </Animated.View>
 
+        <Animated.View entering={FadeInDown.delay(130).springify()} style={styles.quickActionsSection}>
+          <Text style={[typography.h3, { color: colors.text, marginBottom: 8 }]}>Quick Actions</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable
+              onPress={() => handleScanDenial('camera')}
+              style={[styles.quickActionCard, { backgroundColor: `${colors.primary}10`, borderColor: `${colors.primary}30` }]}
+            >
+              <Text style={{ fontSize: 24, marginBottom: 4 }}>📷</Text>
+              <Text style={[typography.caption, { color: colors.primary, fontFamily: 'Outfit_600SemiBold', textAlign: 'center' }]}>Scan Denial{'\n'}Letter</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => handleScanDenial('library')}
+              style={[styles.quickActionCard, { backgroundColor: `${colors.primary}10`, borderColor: `${colors.primary}30` }]}
+            >
+              <Text style={{ fontSize: 24, marginBottom: 4 }}>🖼️</Text>
+              <Text style={[typography.caption, { color: colors.primary, fontFamily: 'Outfit_600SemiBold', textAlign: 'center' }]}>Upload{'\n'}Photo</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                if (appealLetter) {
+                  Share.share({ title: `Appeal Letter - ${caseData.procedure_name}`, message: `Hi Doctor,\n\nI've drafted an appeal letter for my denied ${caseData.procedure_name} prior authorization with ${caseData.insurer_name || 'my insurer'}. Could you please review it and consider signing or submitting a supporting Letter of Medical Necessity?\n\nI would also appreciate if we could schedule a peer-to-peer review with the insurer's medical director, as this is often the most effective way to overturn denials.\n\nThank you for your support.\n\n---\n\n${appealLetter}` });
+                } else {
+                  Alert.alert('Generate Appeal First', 'Write an appeal letter below, then share it with your doctor for review and signature.');
+                }
+              }}
+              style={[styles.quickActionCard, { backgroundColor: `${colors.secondary}10`, borderColor: `${colors.secondary}30` }]}
+            >
+              <Text style={{ fontSize: 24, marginBottom: 4 }}>👨‍⚕️</Text>
+              <Text style={[typography.caption, { color: colors.secondary, fontFamily: 'Outfit_600SemiBold', textAlign: 'center' }]}>Send to{'\n'}Doctor</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/rights')}
+              style={[styles.quickActionCard, { backgroundColor: `${colors.accent}10`, borderColor: `${colors.accent}30` }]}
+            >
+              <Text style={{ fontSize: 24, marginBottom: 4 }}>⚖️</Text>
+              <Text style={[typography.caption, { color: colors.accent, fontFamily: 'Outfit_600SemiBold', textAlign: 'center' }]}>Know Your{'\n'}Rights</Text>
+            </Pressable>
+          </View>
+        </Animated.View>
+
         <Animated.View entering={FadeInDown.delay(140).springify()}>
           <CallLog caseId={caseData.id} insurerName={caseData.insurer_name || 'your insurer'} />
         </Animated.View>
@@ -945,6 +985,8 @@ const styles = StyleSheet.create({
   timelineDot: { width: 10, height: 10, borderRadius: 5, marginTop: 4 },
   timelineContent: { flex: 1, gap: 2 },
   timelineLine: { position: 'absolute', left: 4, top: 22, width: 2, height: 40 },
+  quickActionsSection: { paddingHorizontal: 20, marginBottom: 8 },
+  quickActionCard: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: radii.card, borderWidth: 1 },
   letterSection: { marginHorizontal: 20, marginBottom: 16, borderRadius: 16, borderWidth: 1, padding: 16, gap: 12 },
   letterHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   letterContent: { maxHeight: 300 },
