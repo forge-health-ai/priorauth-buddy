@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, Modal, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -113,57 +113,65 @@ export function FeedbackPrompt({ visible, onClose }: FeedbackPromptProps) {
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={handleDismiss}>
-      <View style={styles.overlay}>
-        <Animated.View entering={FadeInUp.springify()} style={[styles.card, { backgroundColor: colors.surface }]}>
-          <MiniBuddy mood="curious" size={50} />
-          <Text style={[typography.h3, { color: colors.text, textAlign: 'center' }]}>
-            How's Buddy doing?
-          </Text>
-          <Text style={[typography.caption, { color: colors.textSecondary, textAlign: 'center' }]}>
-            Quick feedback to make the app better for everyone fighting denials.
-          </Text>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.overlay}>
+          <Animated.View entering={FadeInUp.springify()} style={[styles.card, { backgroundColor: colors.surface }]}>
+            <MiniBuddy mood="curious" size={50} />
+            <Text style={[typography.h3, { color: colors.text, textAlign: 'center' }]}>
+              How's Buddy doing?
+            </Text>
+            <Text style={[typography.caption, { color: colors.textSecondary, textAlign: 'center' }]}>
+              Quick feedback to make the app better for everyone fighting denials.
+            </Text>
 
-          <View style={styles.ratingRow}>
-            {[1, 2, 3, 4, 5].map(n => (
-              <Pressable
-                key={n}
-                onPress={() => { Haptics.selectionAsync(); setRating(n); }}
-                style={[styles.ratingButton, {
-                  backgroundColor: rating === n ? colors.primary : colors.surfaceElevated,
-                  borderColor: rating === n ? colors.primary : colors.tabBarBorder,
-                }]}
-              >
-                <Text style={{ fontSize: 20 }}>
-                  {n <= 2 ? '😤' : n === 3 ? '😐' : n === 4 ? '😊' : '🤩'}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          <TextInput
-            placeholder="What should Buddy do better? What's missing?"
-            placeholderTextColor={colors.textTertiary}
-            value={comment}
-            onChangeText={setComment}
-            multiline
-            numberOfLines={3}
-            style={[styles.input, {
-              backgroundColor: colors.surfaceElevated,
-              color: colors.text,
-              borderColor: colors.tabBarBorder,
-            }]}
-          />
-
-          <View style={styles.buttonRow}>
-            <View style={{ flex: 1 }}>
-              <FORGEButton title="Send" onPress={handleSubmit} disabled={!rating} />
+            <View style={styles.ratingRow}>
+              {([
+                { n: 1, mood: 'angry' as const, label: 'Terrible' },
+                { n: 2, mood: 'confused' as const, label: 'Bad' },
+                { n: 3, mood: 'thinking' as const, label: 'Okay' },
+                { n: 4, mood: 'happy' as const, label: 'Good' },
+                { n: 5, mood: 'celebrating' as const, label: 'Amazing' },
+              ]).map(({ n, mood }) => (
+                <Pressable
+                  key={n}
+                  onPress={() => { Haptics.selectionAsync(); setRating(n); }}
+                  style={[styles.ratingButton, {
+                    backgroundColor: rating === n ? colors.primary : colors.surfaceElevated,
+                    borderColor: rating === n ? colors.primary : colors.tabBarBorder,
+                  }]}
+                >
+                  <MiniBuddy mood={mood} size={28} />
+                </Pressable>
+              ))}
             </View>
-            <Pressable onPress={handleDismiss} style={styles.skipButton}>
-              <Text style={[typography.caption, { color: colors.textTertiary }]}>Maybe later</Text>
-            </Pressable>
-          </View>
-        </Animated.View>
-      </View>
+
+            <TextInput
+              placeholder="What should Buddy do better? What's missing?"
+              placeholderTextColor={colors.textTertiary}
+              value={comment}
+              onChangeText={setComment}
+              multiline
+              numberOfLines={3}
+              blurOnSubmit
+              returnKeyType="done"
+              style={[styles.input, {
+                backgroundColor: colors.surfaceElevated,
+                color: colors.text,
+                borderColor: colors.tabBarBorder,
+              }]}
+            />
+
+            <View style={styles.buttonRow}>
+              <View style={{ flex: 1 }}>
+                <FORGEButton title="Send" onPress={handleSubmit} disabled={!rating} />
+              </View>
+              <Pressable onPress={handleDismiss} style={styles.skipButton}>
+                <Text style={[typography.caption, { color: colors.textTertiary }]}>Maybe later</Text>
+              </Pressable>
+            </View>
+          </Animated.View>
+        </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }
