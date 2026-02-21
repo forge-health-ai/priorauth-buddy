@@ -97,6 +97,8 @@ export default function RootLayout() {
       if (session?.user) {
         checkTermsAcceptance(session.user.id);
         identifyUser(session.user.id);
+        // Refresh scheduled notifications on app open
+        try { require('../src/lib/notifications').refreshNotifications(session.user.id).catch(() => {}); } catch {}
       }
       setLoading(false);
     });

@@ -91,6 +91,13 @@ export default function OnboardingScreen({ onComplete }: OnboardingProps) {
             console.error('Name save error:', error);
             setErrorMsg('Could not save your name. You can update it later in settings.');
           }
+          // Save name for personalized notifications
+          try {
+            const { getNotificationPrefs, saveNotificationPrefs } = require('../src/lib/notifications');
+            const prefs = await getNotificationPrefs();
+            await saveNotificationPrefs({ ...prefs, userName: name.trim() });
+          } catch {}
+
         }
       } catch (e) {
         console.error('Name save error:', e);

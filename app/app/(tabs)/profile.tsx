@@ -17,6 +17,7 @@ import { ShareCard } from '../../src/components/ShareCard';
 import { shareRankAchievement } from '../../src/lib/share-card';
 import { getSubscriptionStatus } from '../../src/lib/subscription';
 import { EvolutionPath } from '../../src/components/EvolutionPath';
+import { getNotificationPrefs, saveNotificationPrefs, requestNotificationPermission, refreshNotifications, NotificationPrefs } from '../../src/lib/notifications';
 
 function SettingRow({ label, value, onPress }: { label: string; value?: string; onPress?: () => void }) {
   const { colors, typography } = useTheme();
@@ -31,7 +32,7 @@ function SettingRow({ label, value, onPress }: { label: string; value?: string; 
 export default function ProfileScreen() {
   const { colors, typography } = useTheme();
   const router = useRouter();
-  const [notifications, setNotifications] = useState(true);
+  const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>({ enabled: false, deadlineReminders: true, checkInNudges: true, weeklyDigest: true });
   const [userEmail, setUserEmail] = useState<string>('');
   const [stats, setStats] = useState({
     cases: 0,
@@ -97,8 +98,40 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchUserData();
+      getNotificationPrefs().then(setNotifPrefs);
     }, [fetchUserData])
   );
+
+  const toggleNotifications = async (enabled: boolean) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (enabled) {
+      const granted = await requestNotificationPermission();
+      if (!granted) return; // OS denied, don't flip the toggle
+    }
+    const updated = { ...notifPrefs, enabled };
+    setNotifPrefs(updated);
+    await saveNotificationPrefs(updated);
+    if (enabled) {
+      // Get user ID and refresh notifications
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) await refreshNotifications(session.user.id);
+      } catch {}
+    }
+  };
+
+  const toggleNotifSetting = async (key: 'deadlineReminders' | 'checkInNudges' | 'weeklyDigest') => {
+    Haptics.selectionAsync();
+    const updated = { ...notifPrefs, [key]: !notifPrefs[key] };
+    setNotifPrefs(updated);
+    await saveNotificationPrefs(updated);
+    if (updated.enabled) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) await refreshNotifications(session.user.id);
+      } catch {}
+    }
+  };
 
   const handleSignOut = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -205,12 +238,28 @@ export default function ProfileScreen() {
             <View style={[styles.settingRow, { borderBottomColor: colors.tabBarBorder }]}>
               <Text style={[typography.body, { color: colors.text }]}>Push Notifications</Text>
               <Switch
-                value={notifications}
-                onValueChange={(v) => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setNotifications(v); }}
+                value={notifPrefs.enabled}
+                onValueChange={toggleNotifications}
                 trackColor={{ false: colors.surfaceElevated, true: `${colors.primary}60` }}
-                thumbColor={notifications ? colors.primary : colors.textTertiary}
+                thumbColor={notifPrefs.enabled ? colors.primary : colors.textTertiary}
               />
             </View>
+            {notifPrefs.enabled && (
+              <View style={{ paddingLeft: 16, gap: 0 }}>
+                <View style={[styles.settingRow, { borderBottomColor: colors.tabBarBorder }]}>
+                  <Text style={[typography.caption, { color: colors.textSecondary }]}>🛡️ Deadline reminders</Text>
+                  <Switch value={notifPrefs.deadlineReminders} onValueChange={() => toggleNotifSetting('deadlineReminders')} trackColor={{ false: colors.surfaceElevated, true: `${colors.primary}60` }} thumbColor={notifPrefs.deadlineReminders ? colors.primary : colors.textTertiary} />
+                </View>
+                <View style={[styles.settingRow, { borderBottomColor: colors.tabBarBorder }]}>
+                  <Text style={[typography.caption, { color: colors.textSecondary }]}>💬 Check-in nudges</Text>
+                  <Switch value={notifPrefs.checkInNudges} onValueChange={() => toggleNotifSetting('checkInNudges')} trackColor={{ false: colors.surfaceElevated, true: `${colors.primary}60` }} thumbColor={notifPrefs.checkInNudges ? colors.primary : colors.textTertiary} />
+                </View>
+                <View style={[styles.settingRow, { borderBottomColor: colors.tabBarBorder }]}>
+                  <Text style={[typography.caption, { color: colors.textSecondary }]}>📊 Weekly digest</Text>
+                  <Switch value={notifPrefs.weeklyDigest} onValueChange={() => toggleNotifSetting('weeklyDigest')} trackColor={{ false: colors.surfaceElevated, true: `${colors.primary}60` }} thumbColor={notifPrefs.weeklyDigest ? colors.primary : colors.textTertiary} />
+                </View>
+              </View>
+            )}
             <SettingRow label="Upgrade to Pro" value="$4.99/mo" onPress={() => router.push('/upgrade')} />
             <SettingRow label="Account" value={userEmail || 'Signed In'} />
             <SettingRow label="Help & Support" onPress={() => router.push('/help')} />
