@@ -98,7 +98,7 @@ export async function generateDOIComplaint(input: {
 // ===== AI CALL COACH =====
 
 export interface CoachMessage {
-  role: 'user' | 'coach';
+  role: 'user' | 'coach' | 'tip';
   content: string;
   coachFeedback?: string;
 }

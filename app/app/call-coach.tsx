@@ -40,7 +40,13 @@ export default function CallCoachScreen() {
     {
       id: 'welcome',
       role: 'coach',
-      content: `Welcome! I'm going to play the role of an insurance representative. Your scenario is: "${scenario}".\n\n${intro}\n\nGo ahead and respond as if you're on the phone with me!`,
+      content: `Welcome! I'm going to play the role of an insurance representative. Your scenario is: "${scenario}".\n\nGo ahead and respond as if you're on the phone with me!`,
+      timestamp: new Date(),
+    },
+    {
+      id: 'tip',
+      role: 'tip',
+      content: `Try opening with something like:\n"${intro}"`,
       timestamp: new Date(),
     },
   ]);
@@ -71,7 +77,7 @@ export default function CallCoachScreen() {
     
     try {
       const history: CoachMessage[] = messages
-        .filter(m => m.id !== 'welcome')
+        .filter(m => m.id !== 'welcome' && m.role !== 'tip')
         .map(m => ({ role: m.role, content: m.content, coachFeedback: m.coachFeedback }));
       
       const response = await getCoachResponse(
@@ -128,7 +134,19 @@ export default function CallCoachScreen() {
 
   const renderMessage = (message: ChatMessage, index: number) => {
     const isUser = message.role === 'user';
-    const showFeedback = !isUser && message.coachFeedback && index === messages.length - 1 && !sessionComplete;
+    const isTip = message.role === 'tip';
+    const showFeedback = !isUser && !isTip && message.coachFeedback && index === messages.length - 1 && !sessionComplete;
+
+    if (isTip) {
+      return (
+        <Animated.View key={message.id} entering={FadeInUp.duration(300).springify()} style={{ paddingHorizontal: 8, marginVertical: 4 }}>
+          <View style={[styles.messageBubble, { backgroundColor: `${colors.primary}15`, borderLeftWidth: 3, borderLeftColor: colors.primary, borderRadius: radii.card }]}>
+            <Text style={[typography.caption, { color: colors.primary, fontFamily: 'Outfit_600SemiBold', marginBottom: 4 }]}>💡 Buddy's tip — try saying:</Text>
+            <Text style={[typography.body, { color: colors.text, fontStyle: 'italic' }]}>{message.content.replace('Try opening with something like:\n', '')}</Text>
+          </View>
+        </Animated.View>
+      );
+    }
     
     return (
       <Animated.View
