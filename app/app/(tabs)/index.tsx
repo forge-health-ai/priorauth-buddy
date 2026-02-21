@@ -28,13 +28,13 @@ function getGreeting(name?: string): string {
   return name ? `${timeGreeting}, ${name}` : timeGreeting;
 }
 
-function StatCard({ label, value, color, bgColor }: { label: string; value: string; color: string; bgColor: string }) {
+function StatCard({ label, value, color, bgColor, onPress }: { label: string; value: string; color: string; bgColor: string; onPress?: () => void }) {
   const { typography, colors } = useTheme();
   return (
-    <View style={[styles.statCard, { backgroundColor: bgColor }]}>
+    <Pressable onPress={onPress} style={[styles.statCard, { backgroundColor: bgColor }]}>
       <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 28, color }}>{value}</Text>
       <Text style={[typography.caption, { color: colors.textSecondary }]}>{label}</Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -190,9 +190,9 @@ export default function HomeScreen() {
         )}
 
         <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.statsRow}>
-          <StatCard label="Pending" value={String(pendingCount)} color={colors.warning} bgColor={colors.surface} />
-          <StatCard label="Denied" value={String(deniedCount)} color={colors.error} bgColor={colors.surface} />
-          <StatCard label="Won" value={String(wonCount)} color={colors.success} bgColor={colors.surface} />
+          <StatCard label="Pending" value={String(pendingCount)} color={colors.warning} bgColor={colors.surface} onPress={() => router.push({ pathname: '/(tabs)/cases', params: { filter: 'pending' } })} />
+          <StatCard label="Denied" value={String(deniedCount)} color={colors.error} bgColor={colors.surface} onPress={() => router.push({ pathname: '/(tabs)/cases', params: { filter: 'denied' } })} />
+          <StatCard label="Won" value={String(wonCount)} color={colors.success} bgColor={colors.surface} onPress={() => router.push({ pathname: '/(tabs)/cases', params: { filter: 'won' } })} />
         </Animated.View>
 
         {alerts.length > 0 && (

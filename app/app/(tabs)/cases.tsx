@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTheme, radii, springs } from '../../src/theme';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { CaseCard } from '../../src/components/CaseCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { MiniBuddy } from '../../src/components/MiniBuddy';
@@ -35,9 +35,16 @@ function FAB({ onPress }: { onPress: () => void }) {
 export default function CasesScreen() {
   const { colors, typography } = useTheme();
   const router = useRouter();
+  const { filter } = useLocalSearchParams<{ filter?: string }>();
   const [cases, setCases] = useState<Case[]>([]);
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Pick up filter from navigation params
+  useEffect(() => {
+    if (filter) setActiveFilter(filter);
+  }, [filter]);
 
   const fetchCases = async () => {
     try {
@@ -115,6 +122,22 @@ export default function CasesScreen() {
         </View>
       </View>
 
+      {cases.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxHeight: 44, paddingHorizontal: 20, marginBottom: 4 }} contentContainerStyle={{ gap: 8, alignItems: 'center' }}>
+          {['all', 'pending', 'denied', 'won'].map(f => {
+            const isActive = f === 'all' ? !activeFilter : activeFilter === f;
+            const chipColors: Record<string, string> = { pending: colors.warning, denied: colors.error, won: colors.success };
+            return (
+              <Pressable key={f} onPress={() => { Haptics.selectionAsync(); setActiveFilter(f === 'all' ? null : f); }} style={{ paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, backgroundColor: isActive ? (chipColors[f] || colors.primary) + '20' : colors.surface, borderWidth: 1, borderColor: isActive ? chipColors[f] || colors.primary : colors.tabBarBorder }}>
+                <Text style={[typography.caption, { color: isActive ? chipColors[f] || colors.primary : colors.textSecondary, fontFamily: isActive ? 'Outfit_600SemiBold' : 'Outfit_400Regular' }]}>
+                  {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      )}
+
       {cases.length === 0 && !loading ? (
         <EmptyState
           mood="sleeping"
@@ -129,7 +152,13 @@ export default function CasesScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
         >
-          {cases.map((caseItem, index) => (
+          {cases.filter(c => {
+            if (!activeFilter) return true;
+            if (activeFilter === 'pending') return c.status === 'pending';
+            if (activeFilter === 'denied') return ['denied', 'appeal_denied'].includes(c.status);
+            if (activeFilter === 'won') return ['approved', 'appeal_won'].includes(c.status);
+            return true;
+          }).map((caseItem, index) => (
             <Animated.View
               key={caseItem.id}
               entering={FadeInDown.delay(index * 50).springify()}
