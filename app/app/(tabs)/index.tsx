@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -22,6 +22,7 @@ import { getSubscriptionStatus } from '../../src/lib/subscription';
 import { useBuddy } from '../../src/context/BuddyContext';
 import { EvolutionPath } from '../../src/components/EvolutionPath';
 import { FeedbackPrompt, trackFeedbackAction } from '../../src/components/FeedbackPrompt';
+import { recordCheckIn, getStreakData, getStreakMessage, getMilestoneMessage, StreakData } from '../../src/lib/streaks';
 
 function getGreeting(name?: string): string {
   const hour = new Date().getHours();
@@ -49,6 +50,8 @@ export default function HomeScreen() {
   const [alerts, setAlerts] = useState<BuddyAlert[]>([]);
   const [showEvolution, setShowEvolution] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [streak, setStreak] = useState<StreakData>({ currentStreak: 0, longestStreak: 0, lastCheckIn: null, totalCheckIns: 0 });
+  const [milestoneMsg, setMilestoneMsg] = useState<string | null>(null);
   const { rank, isPro, stats: buddyStats, refresh: refreshBuddy } = useBuddy();
 
   const fetchCases = useCallback(async () => {
@@ -106,6 +109,11 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchCases();
+      // Record daily check-in streak
+      recordCheckIn().then(({ data, milestone }) => {
+        setStreak(data);
+        if (milestone) setMilestoneMsg(getMilestoneMessage(milestone));
+      });
       // Check if we should prompt for feedback
       trackFeedbackAction().then(shouldShow => { if (shouldShow) setShowFeedback(true); });
     }, [fetchCases])
@@ -187,6 +195,21 @@ export default function HomeScreen() {
           <RankProgressCard stats={buddyStats} onPress={() => { Haptics.selectionAsync(); setShowEvolution(true); }} />
         </Animated.View>
 
+        {streak.currentStreak > 0 && (
+          <Animated.View entering={FadeInDown.delay(160).springify()}>
+            <View style={[styles.streakCard, { backgroundColor: colors.surface }]}>
+              <Text style={{ fontSize: 22 }}>🔥</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[typography.h3, { color: colors.text }]}>{streak.currentStreak}-day streak</Text>
+                <Text style={[typography.caption, { color: colors.textSecondary }]}>{getStreakMessage(streak.currentStreak, userName)}</Text>
+              </View>
+              {streak.longestStreak > streak.currentStreak && (
+                <Text style={[typography.caption, { color: colors.textTertiary }]}>Best: {streak.longestStreak}</Text>
+              )}
+            </View>
+          </Animated.View>
+        )}
+
         {buddyStats.insurersBeaten.length > 0 && (
           <Animated.View entering={FadeInDown.delay(175).springify()}>
             <BuddyWinBadges insurersBeaten={buddyStats.insurersBeaten} />
@@ -243,6 +266,19 @@ export default function HomeScreen() {
         </Animated.View>
       </ScrollView>
 
+      {milestoneMsg && (
+        <Modal visible={true} animationType="fade" transparent onRequestClose={() => setMilestoneMsg(null)}>
+          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 }} onPress={() => setMilestoneMsg(null)}>
+            <View style={{ backgroundColor: colors.surface, borderRadius: radii.card, padding: 24, alignItems: 'center', gap: 16, width: '100%' }}>
+              <BuddyMascot mood="celebrating" size={100} />
+              <Text style={[typography.h2, { color: colors.text, textAlign: 'center' }]}>Streak Milestone!</Text>
+              <Text style={[typography.body, { color: colors.textSecondary, textAlign: 'center' }]}>{milestoneMsg}</Text>
+              <FORGEButton title="Keep Fighting" onPress={() => setMilestoneMsg(null)} />
+            </View>
+          </Pressable>
+        </Modal>
+      )}
+
       <FeedbackPrompt visible={showFeedback} onClose={() => setShowFeedback(false)} />
 
       {rank && (
@@ -264,6 +300,10 @@ const styles = StyleSheet.create({
   buddySection: { alignItems: 'center', paddingVertical: 20, gap: 8 },
   scoreContainer: { alignItems: 'center' },
   statsRow: { flexDirection: 'row', gap: 12 },
+  streakCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: radii.card, padding: 14,
+    shadowColor: 'rgba(0,0,0,0.06)', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 8, elevation: 2,
+  },
   statCard: {
     flex: 1, borderRadius: radii.card, padding: 16, alignItems: 'center', gap: 4,
     shadowColor: 'rgba(0,0,0,0.06)', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 8, elevation: 2,
