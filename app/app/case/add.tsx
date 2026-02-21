@@ -26,9 +26,14 @@ const PROCEDURE_TYPES = [
 ];
 
 const INSURERS = [
-  'UnitedHealthcare', 'Anthem / Elevance', 'Cigna', 'Aetna / CVS Health',
-  'Humana', 'Blue Cross Blue Shield', 'Kaiser Permanente', 'Molina Healthcare',
-  'Centene', 'Medicare Advantage', 'Medicaid', 'Other',
+  'Aetna / CVS Health', 'Anthem / Elevance', 'Blue Cross Blue Shield',
+  'Centene', 'Cigna', 'Humana', 'Kaiser Permanente',
+  'Molina Healthcare', 'UnitedHealthcare',
+  'Ambetter', 'Amerigroup', 'CareSource', 'Geisinger',
+  'Highmark', 'Horizon BCBS', 'Independence Blue Cross',
+  'Medicare (Original)', 'Medicare Advantage', 'Medicaid',
+  'Oscar Health', 'Regence', 'TRICARE', 'WellCare',
+  'Other',
 ];
 
 const URGENCY_OPTIONS = [
@@ -86,21 +91,29 @@ export default function AddCaseScreen() {
     setSaving(true);
 
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
+      // Get current user (with session fallback)
+      let userId: string | undefined;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        userId = user?.id;
+      } catch {
+        const { data: { session } } = await supabase.auth.getSession();
+        userId = session?.user?.id;
+      }
       
-      if (!user) {
+      if (!userId) {
         Alert.alert('Error', 'You must be signed in to add a case');
         setSaving(false);
         return;
       }
 
       // Calculate appeal deadline from insurer's known window + denial date
-      const denialDateObj = form.denialDate ? new Date(form.denialDate) : new Date();
+      const parsedDenialDate = form.denialDate ? new Date(form.denialDate) : null;
+      const denialDateObj = (parsedDenialDate && !isNaN(parsedDenialDate.getTime())) ? parsedDenialDate : new Date();
       const { deadline: appealDeadline, windowDays } = estimateAppealDeadline(form.insurerName, denialDateObj);
 
       // Use local storage instead of Supabase for PHI compliance
-      const caseData = await createCase(user.id, {
+      const caseData = await createCase(userId, {
         procedure_name: form.procedureName,
         procedure_code: form.procedureCode || undefined,
         insurer_name: form.insurerName,
@@ -117,7 +130,7 @@ export default function AddCaseScreen() {
       });
 
       // Create initial case event in local storage
-      await createCaseEvent(caseData.id, user.id, {
+      await createCaseEvent(caseData.id, userId, {
         event_type: form.denialReason ? 'denial_received' : 'case_created',
         title: form.denialReason ? 'Denial Received' : 'Case Created',
         description: form.denialReason 
@@ -131,9 +144,13 @@ export default function AddCaseScreen() {
         `Tracking "${form.procedureName}" with ${form.insurerName}. Buddy will watch your deadlines.`,
         [{ text: 'Let\'s go!', onPress: () => router.back() }]
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('Submit error:', error);
-      Alert.alert('Error', 'Failed to save case. Please try again.');
+      // Never lose their data — show specific error and keep form filled
+      Alert.alert(
+        'Save Issue',
+        `Don't worry, your info is still here. Tap "Add Case" to try again.\n\n(${error?.message || 'Unknown error'})`,
+      );
     } finally {
       setSaving(false);
     }
@@ -388,7 +405,9 @@ export default function AddCaseScreen() {
           {(() => {
             const intel = getInsurerIntel(form.insurerName);
             const windowDays = intel?.appealWindowDays || 30;
-            const denialDateObj = form.denialDate ? new Date(form.denialDate) : new Date();
+            const parsed = form.denialDate ? new Date(form.denialDate) : null;
+            const denialDateObj = (parsed && !isNaN(parsed.getTime())) ? parsed : new Date();
+            const validDate = parsed && !isNaN(parsed.getTime());
             const deadlineDate = new Date(denialDateObj);
             deadlineDate.setDate(deadlineDate.getDate() + windowDays);
             const daysLeft = Math.ceil((deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -396,7 +415,7 @@ export default function AddCaseScreen() {
               <View style={[styles.bubble, { backgroundColor: `${daysLeft <= 7 ? colors.error : colors.primary}10`, marginTop: 8, padding: 10 }]}>
                 <Text style={[typography.caption, { color: daysLeft <= 7 ? colors.error : colors.primary }]}>
                   🛡️ Buddy's estimate: {form.insurerName} typically allows {windowDays} days to appeal.{' '}
-                  {form.denialDate
+                  {validDate
                     ? `That gives you until ${deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} (~${daysLeft} days left).`
                     : `From today, that's ${deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.`
                   }
@@ -479,7 +498,7 @@ const styles = StyleSheet.create({
   field: { gap: 0 },
   input: { borderWidth: 1, borderRadius: radii.button, padding: 14, fontSize: 16 },
   textArea: { minHeight: 80, paddingTop: 14, textAlignVertical: 'top' },
-  insurerList: { maxHeight: 220 },
+  insurerList: { maxHeight: 320 },
   typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   typeChip: { borderWidth: 1, borderRadius: radii.button, paddingHorizontal: 12, paddingVertical: 10 },
   insurerChip: { borderWidth: 1, borderRadius: radii.button, padding: 12, marginBottom: 8 },
