@@ -374,8 +374,8 @@ export function BuddyMascot({ mood = 'happy', size = 120, onPress, rank: rankPro
           <G>
             <Polygon
               points={`${offsetX + size * 0.3},${offsetY - size * 0.02} ${offsetX + size * 0.37},${offsetY - size * 0.1} ${offsetX + size * 0.44},${offsetY - size * 0.03} ${offsetX + size * 0.5},${offsetY - size * 0.12} ${offsetX + size * 0.56},${offsetY - size * 0.03} ${offsetX + size * 0.63},${offsetY - size * 0.1} ${offsetX + size * 0.7},${offsetY - size * 0.02}`}
-              fill="#E8E8E8"
-              stroke="#B0C4DE"
+              fill="#FFD700"
+              stroke="#DAA520"
               strokeWidth={1.5}
             />
           </G>

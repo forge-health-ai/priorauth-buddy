@@ -5,9 +5,12 @@ import type { BuddyMood } from './BuddyMascot';
 interface MiniBuddyProps {
   mood?: BuddyMood;
   size?: number;
+  color?: string;
 }
 
-export function MiniBuddy({ mood = 'happy', size = 36 }: MiniBuddyProps) {
+export function MiniBuddy({ mood = 'happy', size = 36, color }: MiniBuddyProps) {
+  const shieldColor = color || '#FF6B35';
+  const accentColor = color ? `${color}99` : '#F7931E';
   const eyeColor = '#1A1A1E';
   const cx1 = size * 0.38;
   const cx2 = size * 0.62;
@@ -88,11 +91,11 @@ export function MiniBuddy({ mood = 'happy', size = 36 }: MiniBuddyProps) {
     <Svg width={size} height={size * 0.85} viewBox={`0 0 ${size} ${size * 0.85}`}>
       <Path
         d={`M${size * 0.5} ${size * 0.05} L${size * 0.88} ${size * 0.2} L${size * 0.88} ${size * 0.5} Q${size * 0.88} ${size * 0.75} ${size * 0.5} ${size * 0.82} Q${size * 0.12} ${size * 0.75} ${size * 0.12} ${size * 0.5} L${size * 0.12} ${size * 0.2} Z`}
-        fill="#FF6B35"
+        fill={shieldColor}
       />
       <Path
         d={`M${size * 0.5} ${size * 0.1} L${size * 0.82} ${size * 0.23} L${size * 0.82} ${size * 0.48} Q${size * 0.82} ${size * 0.7} ${size * 0.5} ${size * 0.77} Q${size * 0.18} ${size * 0.7} ${size * 0.18} ${size * 0.48} L${size * 0.18} ${size * 0.23} Z`}
-        fill="#F7931E"
+        fill={accentColor}
         opacity={0.6}
       />
       <Ellipse cx={size * 0.5} cy={size * 0.48} rx={size * 0.28} ry={size * 0.22} fill="white" opacity={0.9} />
