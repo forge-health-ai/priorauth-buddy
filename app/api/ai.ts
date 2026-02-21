@@ -67,6 +67,10 @@ Rules:
 GUARDRAIL: Stay in the insurance call roleplay ONLY. If the user says anything violent, threatening, sexual, or completely off-topic, break character and respond: "I'm here to help you practice insurance calls. Let's stay focused on winning your appeal." Then continue the coaching.`,
 
   analyzeDenial: `You are an expert at analyzing insurance denial letters. Extract key information and provide actionable appeal strategies. Be concise and specific.`,
+
+  scanDenialLetter: `You are an expert at reading insurance denial letters. Extract ALL key information from the photographed/scanned denial letter image. Be thorough and accurate.
+
+GUARDRAIL: You ONLY extract information from insurance denial letters. If the image is not a denial letter or insurance document, respond with: "This doesn't look like a denial letter. Please photograph your insurance denial letter and try again."`,
 };
 
 // Simple rate limiter
@@ -154,6 +158,37 @@ async function callAnthropic(systemPrompt: string, userPrompt: string, maxTokens
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`Anthropic API error: ${response.status} ${errorText}`);
+  }
+
+  return await response.json();
+}
+
+// Call Anthropic API with vision (image + text)
+async function callAnthropicVision(systemPrompt: string, imageBase64: string, mediaType: string, textPrompt: string, maxTokens: number) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } },
+          { type: 'text', text: textPrompt },
+        ],
+      }],
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Anthropic Vision API error: ${response.status} ${errorText}`);
   }
 
   return await response.json();
@@ -433,6 +468,66 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           timeline,
           appealAngles,
           nextSteps,
+          costUsd: calculateCost(inputTokens, outputTokens),
+        };
+        break;
+      }
+
+      case 'scanDenialLetter': {
+        const { imageBase64, mediaType } = payload as { imageBase64: string; mediaType: string };
+        if (!imageBase64) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: 'No image provided' }));
+          return;
+        }
+
+        const scanPrompt = `Extract ALL information from this insurance denial letter. Format your response exactly as:
+
+INSURER NAME: [insurance company name]
+PATIENT NAME: [if visible]
+PROCEDURE/SERVICE: [what was denied]
+PROCEDURE CODE: [CPT/HCPCS code if visible]
+DENIAL REASON: [specific reason given]
+DENIAL DATE: [date on the letter]
+REFERENCE NUMBER: [claim/reference number if visible]
+APPEAL DEADLINE: [if mentioned]
+CLINICAL CRITERIA: [any guidelines or criteria cited]
+APPEAL INSTRUCTIONS: [how to appeal, if mentioned]
+FULL TEXT: [transcribe the complete letter text]
+
+If any field is not visible or not applicable, write "Not found". Be accurate — do not guess or make up information.`;
+
+        const data = await callAnthropicVision(
+          SYSTEM_PROMPTS.scanDenialLetter,
+          imageBase64,
+          mediaType || 'image/jpeg',
+          scanPrompt,
+          1500
+        );
+
+        const scanText = data.content?.[0]?.text || '';
+        const inputTokens = data.usage?.input_tokens || 0;
+        const outputTokens = data.usage?.output_tokens || 0;
+
+        // Parse extracted fields
+        const extract = (field: string) => {
+          const match = scanText.match(new RegExp(`${field}:\\s*(.+?)(?=\\n[A-Z]|$)`, 'is'));
+          return match ? match[1].trim() : '';
+        };
+
+        result = {
+          insurerName: extract('INSURER NAME'),
+          patientName: extract('PATIENT NAME'),
+          procedureName: extract('PROCEDURE/SERVICE'),
+          procedureCode: extract('PROCEDURE CODE'),
+          denialReason: extract('DENIAL REASON'),
+          denialDate: extract('DENIAL DATE'),
+          referenceNumber: extract('REFERENCE NUMBER'),
+          appealDeadline: extract('APPEAL DEADLINE'),
+          clinicalCriteria: extract('CLINICAL CRITERIA'),
+          appealInstructions: extract('APPEAL INSTRUCTIONS'),
+          fullText: extract('FULL TEXT'),
+          rawResponse: scanText,
           costUsd: calculateCost(inputTokens, outputTokens),
         };
         break;

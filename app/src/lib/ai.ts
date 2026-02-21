@@ -95,6 +95,28 @@ export async function generateDOIComplaint(input: {
   return await callAiproxy('generateComplaint', input);
 }
 
+// ===== SCAN DENIAL LETTER (CAMERA/PHOTO) =====
+
+export interface ScanResult {
+  insurerName: string;
+  patientName: string;
+  procedureName: string;
+  procedureCode: string;
+  denialReason: string;
+  denialDate: string;
+  referenceNumber: string;
+  appealDeadline: string;
+  clinicalCriteria: string;
+  appealInstructions: string;
+  fullText: string;
+  rawResponse: string;
+  costUsd: number;
+}
+
+export async function scanDenialLetter(imageBase64: string, mediaType: string = 'image/jpeg'): Promise<ScanResult> {
+  return await callAiproxy('scanDenialLetter', { imageBase64, mediaType });
+}
+
 // ===== AI CALL COACH =====
 
 export interface CoachMessage {

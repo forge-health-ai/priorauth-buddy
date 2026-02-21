@@ -19,7 +19,8 @@ import {
   Case, 
   CaseEvent 
 } from '../../src/lib/local-storage';
-import { generateAppealLetter, generateDOIComplaint, analyzeDenialLetter, DenialAnalysis } from '../../src/lib/ai';
+import { generateAppealLetter, generateDOIComplaint, analyzeDenialLetter, scanDenialLetter, DenialAnalysis, ScanResult } from '../../src/lib/ai';
+import * as ImagePicker from 'expo-image-picker';
 import { trackFeedbackAction } from '../../src/components/FeedbackPrompt';
 import { emailLetterToSelf } from '../../src/lib/email-letter';
 import { submitAnonymousOutcome } from '../../src/lib/outcome-tracking';
@@ -71,6 +72,8 @@ export default function CaseDetailScreen() {
   const [appealLetter, setAppealLetter] = useState<string | null>(null);
   const [complaintLetter, setComplaintLetter] = useState<string | null>(null);
   const [rankUpData, setRankUpData] = useState<{ rank: BuddyRank; wins: number; denials: number } | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [isPro, setIsPro] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
 
@@ -210,6 +213,49 @@ export default function CaseDetailScreen() {
     } finally {
       setGeneratingComplaint(false);
       fetchCaseDetails();
+    }
+  };
+
+  const handleScanDenial = async (source: 'camera' | 'library') => {
+    try {
+      let result;
+      if (source === 'camera') {
+        const perm = await ImagePicker.requestCameraPermissionsAsync();
+        if (!perm.granted) return;
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ['images'],
+          base64: true,
+          quality: 0.7,
+        });
+      } else {
+        const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!perm.granted) return;
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          base64: true,
+          quality: 0.7,
+        });
+      }
+
+      if (result.canceled || !result.assets?.[0]?.base64) return;
+
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      setScanning(true);
+
+      const asset = result.assets[0];
+      const mediaType = asset.mimeType || 'image/jpeg';
+      const scanData = await scanDenialLetter(asset.base64, mediaType);
+      setScanResult(scanData);
+
+      // Auto-populate denial text for analyzer
+      if (scanData.fullText) {
+        setDenialText(scanData.fullText);
+      }
+    } catch (e: any) {
+      console.error('Scan error:', e);
+      Alert.alert('Scan Failed', 'Could not read the denial letter. Try again with better lighting or a clearer photo.');
+    } finally {
+      setScanning(false);
     }
   };
 
@@ -574,6 +620,51 @@ export default function CaseDetailScreen() {
               <Animated.View entering={FadeInDown.duration(200)}>
                 {!analysisResult ? (
                   <View style={styles.analyzerInputSection}>
+                    <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                      <Pressable
+                        onPress={() => handleScanDenial('camera')}
+                        style={[styles.scanButton, { backgroundColor: `${colors.primary}15`, borderColor: colors.primary }]}
+                      >
+                        <Text style={[typography.caption, { color: colors.primary, fontFamily: 'Outfit_600SemiBold' }]}>
+                          📷 Scan Letter
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => handleScanDenial('library')}
+                        style={[styles.scanButton, { backgroundColor: `${colors.primary}15`, borderColor: colors.primary }]}
+                      >
+                        <Text style={[typography.caption, { color: colors.primary, fontFamily: 'Outfit_600SemiBold' }]}>
+                          🖼️ From Photos
+                        </Text>
+                      </Pressable>
+                    </View>
+
+                    {scanning && (
+                      <View style={{ alignItems: 'center', padding: 20, gap: 8 }}>
+                        <MiniBuddy mood="thinking" size={40} />
+                        <Text style={[typography.body, { color: colors.textSecondary }]}>Buddy is reading your denial letter...</Text>
+                      </View>
+                    )}
+
+                    {scanResult && !scanning && (
+                      <View style={[styles.scanResultCard, { backgroundColor: `${colors.success}10`, borderColor: `${colors.success}30` }]}>
+                        <Text style={[typography.caption, { color: colors.success, fontFamily: 'Outfit_600SemiBold' }]}>🛡️ Buddy extracted:</Text>
+                        {scanResult.insurerName && scanResult.insurerName !== 'Not found' && (
+                          <Text style={[typography.caption, { color: colors.text }]}>Insurer: {scanResult.insurerName}</Text>
+                        )}
+                        {scanResult.procedureName && scanResult.procedureName !== 'Not found' && (
+                          <Text style={[typography.caption, { color: colors.text }]}>Procedure: {scanResult.procedureName}</Text>
+                        )}
+                        {scanResult.denialReason && scanResult.denialReason !== 'Not found' && (
+                          <Text style={[typography.caption, { color: colors.text }]}>Reason: {scanResult.denialReason}</Text>
+                        )}
+                        {scanResult.appealDeadline && scanResult.appealDeadline !== 'Not found' && (
+                          <Text style={[typography.caption, { color: colors.error }]}>Deadline: {scanResult.appealDeadline}</Text>
+                        )}
+                        <Text style={[typography.caption, { color: colors.textTertiary, marginTop: 4 }]}>Full text loaded below. Review and hit Analyze.</Text>
+                      </View>
+                    )}
+
                     <TextInput
                       style={[styles.analyzerInput, {
                         borderColor: colors.tabBarBorder,
@@ -581,7 +672,7 @@ export default function CaseDetailScreen() {
                         fontFamily: 'Outfit_400Regular',
                         backgroundColor: colors.background,
                       }]}
-                      placeholder="Paste your denial letter text here..."
+                      placeholder="Paste your denial letter text here or scan it above..."
                       placeholderTextColor={colors.textTertiary}
                       value={denialText}
                       onChangeText={setDenialText}
@@ -800,6 +891,20 @@ const styles = StyleSheet.create({
   },
   analyzerTitle: { flex: 1, gap: 2 },
   analyzerInputSection: { gap: 12, marginTop: 12 },
+  scanButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  scanResultCard: {
+    borderRadius: radii.card,
+    borderWidth: 1,
+    padding: 12,
+    gap: 4,
+    marginBottom: 8,
+  },
   analyzerInput: {
     borderWidth: 1,
     borderRadius: radii.card,
