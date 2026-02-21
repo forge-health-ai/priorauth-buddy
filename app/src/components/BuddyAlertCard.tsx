@@ -25,8 +25,15 @@ export function BuddyAlertCard({ alert }: { alert: BuddyAlert }) {
   const router = useRouter();
   const borderColor = PRIORITY_COLORS[alert.priority] || colors.border;
 
+  const handlePress = () => {
+    if (alert.actionRoute) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push(alert.actionRoute);
+    }
+  };
+
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor, borderLeftWidth: 3 }]}>
+    <Pressable onPress={handlePress} disabled={!alert.actionRoute} style={[styles.card, { backgroundColor: colors.surface, borderColor, borderLeftWidth: 3 }]}>
       <View style={styles.row}>
         <MiniBuddy mood={alert.mood} size={32} />
         <View style={{ flex: 1 }}>
@@ -44,16 +51,13 @@ export function BuddyAlertCard({ alert }: { alert: BuddyAlert }) {
         </View>
       </View>
       {alert.actionLabel && alert.actionRoute && (
-        <Pressable
-          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(alert.actionRoute!); }}
-          style={[styles.actionBtn, { backgroundColor: `${borderColor}15` }]}
-        >
+        <View style={[styles.actionBtn, { backgroundColor: `${borderColor}15` }]}>
           <Text style={[typography.caption, { color: borderColor, fontFamily: 'Outfit_600SemiBold' }]}>
             {alert.actionLabel} →
           </Text>
-        </Pressable>
+        </View>
       )}
-    </View>
+    </Pressable>
   );
 }
 

@@ -47,7 +47,7 @@ export default function AddCaseScreen() {
   const [insurerIntel, setInsurerIntel] = useState<InsurerIntel | null>(null);
   const [showIntel, setShowIntel] = useState(false);
   const [form, setForm] = useState({
-    procedureType: '',
+    procedureTypes: [] as string[],
     procedureName: '',
     procedureCode: '',
     insurerName: '',
@@ -159,18 +159,29 @@ export default function AddCaseScreen() {
       <View style={styles.field}>
         <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: 6 }]}>Type of Procedure</Text>
         <View style={styles.typeGrid}>
-          {PROCEDURE_TYPES.map(pt => (
-            <Pressable
-              key={pt.value}
-              onPress={() => { Haptics.selectionAsync(); updateField('procedureType', pt.value); }}
-              style={[styles.typeChip, {
-                backgroundColor: form.procedureType === pt.value ? `${colors.primary}20` : colors.surface,
-                borderColor: form.procedureType === pt.value ? colors.primary : colors.tabBarBorder,
-              }]}
-            >
-              <Text style={[typography.caption, { color: form.procedureType === pt.value ? colors.primary : colors.text }]}>{pt.label}</Text>
-            </Pressable>
-          ))}
+          {PROCEDURE_TYPES.map(pt => {
+            const selected = form.procedureTypes.includes(pt.value);
+            return (
+              <Pressable
+                key={pt.value}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setForm(prev => ({
+                    ...prev,
+                    procedureTypes: selected
+                      ? prev.procedureTypes.filter(t => t !== pt.value)
+                      : [...prev.procedureTypes, pt.value],
+                  }));
+                }}
+                style={[styles.typeChip, {
+                  backgroundColor: selected ? `${colors.primary}20` : colors.surface,
+                  borderColor: selected ? colors.primary : colors.tabBarBorder,
+                }]}
+              >
+                <Text style={[typography.caption, { color: selected ? colors.primary : colors.text }]}>{pt.label}</Text>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
 
