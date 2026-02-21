@@ -9,6 +9,9 @@ import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { CaseCard } from '../../src/components/CaseCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { MiniBuddy } from '../../src/components/MiniBuddy';
+import { BuddyMascot } from '../../src/components/BuddyMascot';
+import { useBuddy } from '../../src/context/BuddyContext';
+import { getBuddyRank } from '../../src/lib/buddy-evolution';
 import { supabase } from '../../src/lib/supabase';
 import { getCases, Case } from '../../src/lib/local-storage';
 
@@ -35,6 +38,8 @@ function FAB({ onPress }: { onPress: () => void }) {
 export default function CasesScreen() {
   const { colors, typography } = useTheme();
   const router = useRouter();
+  const { buddyStats, isPro } = useBuddy();
+  const rank = getBuddyRank(buddyStats);
   const { filter } = useLocalSearchParams<{ filter?: string }>();
   const [cases, setCases] = useState<Case[]>([]);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
@@ -123,6 +128,24 @@ export default function CasesScreen() {
       </View>
 
       {cases.length > 0 && (
+        <View style={styles.buddyRow}>
+          <BuddyMascot
+            mood={cases.some(c => ['denied', 'appeal_denied'].includes(c.status)) ? 'determined' : 'thinking'}
+            size={50}
+            rank={rank}
+            isPro={isPro}
+          />
+          <View style={[styles.buddyBubble, { backgroundColor: `${colors.primary}12` }]}>
+            <Text style={[typography.caption, { color: colors.text }]}>
+              {cases.length === 1
+                ? "I'm watching your case. Let's stay on top of it."
+                : `Tracking ${cases.length} cases. I've got my eyes on all of them.`}
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {cases.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxHeight: 44, paddingHorizontal: 20, marginBottom: 4 }} contentContainerStyle={{ gap: 8, alignItems: 'center' }}>
           {['all', 'pending', 'denied', 'won'].map(f => {
             const isActive = f === 'all' ? !activeFilter : activeFilter === f;
@@ -183,7 +206,9 @@ export default function CasesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8, gap: 2 },
+  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4, gap: 2 },
+  buddyRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 8, gap: 10 },
+  buddyBubble: { flex: 1, borderRadius: radii.card, padding: 10 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 100, gap: 12 },
   caseCardWrapper: { marginBottom: 12 },
