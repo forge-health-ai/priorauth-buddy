@@ -437,15 +437,15 @@ export default function CaseDetailScreen() {
               onPress={() => handleScanDenial('camera')}
               style={[styles.quickActionCard, { backgroundColor: `${colors.primary}10`, borderColor: `${colors.primary}30` }]}
             >
-              <Text style={{ fontSize: 24, marginBottom: 4 }}>📷</Text>
-              <Text style={[typography.caption, { color: colors.primary, fontFamily: 'Outfit_600SemiBold', textAlign: 'center' }]}>Scan Denial{'\n'}Letter</Text>
+              <MiniBuddy mood="curious" size={28} />
+              <Text style={[typography.caption, { color: colors.primary, fontFamily: 'Outfit_600SemiBold', textAlign: 'center', marginTop: 4 }]}>Scan{'\n'}Letter</Text>
             </Pressable>
             <Pressable
               onPress={() => handleScanDenial('library')}
               style={[styles.quickActionCard, { backgroundColor: `${colors.primary}10`, borderColor: `${colors.primary}30` }]}
             >
-              <Text style={{ fontSize: 24, marginBottom: 4 }}>🖼️</Text>
-              <Text style={[typography.caption, { color: colors.primary, fontFamily: 'Outfit_600SemiBold', textAlign: 'center' }]}>Upload{'\n'}Photo</Text>
+              <MiniBuddy mood="thinking" size={28} />
+              <Text style={[typography.caption, { color: colors.primary, fontFamily: 'Outfit_600SemiBold', textAlign: 'center', marginTop: 4 }]}>Upload{'\n'}Photo</Text>
             </Pressable>
             <Pressable
               onPress={() => {
@@ -457,15 +457,15 @@ export default function CaseDetailScreen() {
               }}
               style={[styles.quickActionCard, { backgroundColor: `${colors.secondary}10`, borderColor: `${colors.secondary}30` }]}
             >
-              <Text style={{ fontSize: 24, marginBottom: 4 }}>👨‍⚕️</Text>
-              <Text style={[typography.caption, { color: colors.secondary, fontFamily: 'Outfit_600SemiBold', textAlign: 'center' }]}>Send to{'\n'}Doctor</Text>
+              <MiniBuddy mood="excited" size={28} />
+              <Text style={[typography.caption, { color: colors.secondary, fontFamily: 'Outfit_600SemiBold', textAlign: 'center', marginTop: 4 }]}>Send to{'\n'}Doctor</Text>
             </Pressable>
             <Pressable
               onPress={() => router.push('/rights')}
               style={[styles.quickActionCard, { backgroundColor: `${colors.accent}10`, borderColor: `${colors.accent}30` }]}
             >
-              <Text style={{ fontSize: 24, marginBottom: 4 }}>⚖️</Text>
-              <Text style={[typography.caption, { color: colors.accent, fontFamily: 'Outfit_600SemiBold', textAlign: 'center' }]}>Know Your{'\n'}Rights</Text>
+              <MiniBuddy mood="determined" size={28} />
+              <Text style={[typography.caption, { color: colors.accent, fontFamily: 'Outfit_600SemiBold', textAlign: 'center', marginTop: 4 }]}>Know Your{'\n'}Rights</Text>
             </Pressable>
           </View>
         </Animated.View>
