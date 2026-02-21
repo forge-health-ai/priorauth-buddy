@@ -270,6 +270,39 @@ export default function ProfileScreen() {
 
         <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.signOutSection}>
           <FORGEButton title="Sign Out" onPress={handleSignOut} variant="ghost" />
+          <Pressable
+            onPress={() => {
+              Alert.alert(
+                'Delete Account',
+                'This will permanently delete your account, email and all server-side data. Case data stored on your device will remain until you uninstall the app. This cannot be undone.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Delete My Account',
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                        // Delete profile data from Supabase
+                        const { data: { user } } = await supabase.auth.getUser();
+                        if (user) {
+                          await supabase.from('profiles').delete().eq('id', user.id);
+                          await supabase.from('appeals').delete().eq('user_id', user.id);
+                        }
+                        await supabase.auth.signOut();
+                      } catch (e) {
+                        console.error('Delete account error:', e);
+                        Alert.alert('Error', 'Could not delete account. Please email support@priorauthbuddy.com for assistance.');
+                      }
+                    },
+                  },
+                ]
+              );
+            }}
+            style={{ alignSelf: 'center', paddingTop: 12 }}
+          >
+            <Text style={[typography.caption, { color: colors.error }]}>Delete Account</Text>
+          </Pressable>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.footer}>

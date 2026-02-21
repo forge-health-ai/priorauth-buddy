@@ -155,6 +155,16 @@ export default function UpgradeScreen() {
           <Pressable onPress={() => router.back()} hitSlop={20} style={{ alignSelf: 'center', paddingTop: 8 }}>
             <Text style={[typography.body, { color: colors.textSecondary }]}>Maybe later</Text>
           </Pressable>
+
+          <View style={{ marginTop: 16, gap: 4 }}>
+            <Text style={[typography.caption, { color: colors.textTertiary, textAlign: 'center', lineHeight: 18 }]}>
+              Payment is charged to your Apple ID account at confirmation of purchase. Subscription automatically renews monthly at $4.99/month unless canceled at least 24 hours before the end of the current period. Manage or cancel anytime in Settings → Apple ID → Subscriptions.
+            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 8 }}>
+              <Pressable onPress={() => router.push('/privacy')}><Text style={[typography.caption, { color: colors.primary }]}>Privacy Policy</Text></Pressable>
+              <Pressable onPress={() => router.push('/terms-of-service')}><Text style={[typography.caption, { color: colors.primary }]}>Terms of Service</Text></Pressable>
+            </View>
+          </View>
         </Animated.View>
       </ScrollView>
     </SafeAreaView>
