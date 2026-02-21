@@ -419,7 +419,7 @@ export default function RightsScreen() {
             <Animated.View entering={FadeInDown.delay(400).springify()}>
               <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
                 <Text style={[typography.h3, { color: colors.primary, marginBottom: 12 }]}>
-                  📜 Key Laws and Regulations
+                  📜 Public References
                 </Text>
                 {stateData.keyLaws.map((law, i) => (
                   <Text key={i} style={[typography.body, { color: colors.text, marginBottom: 6 }]}>
@@ -447,6 +447,10 @@ export default function RightsScreen() {
                 </Text>
               </View>
             </Animated.View>
+
+            <Text style={[typography.caption, { color: colors.textTertiary, textAlign: 'center', paddingHorizontal: 16, marginTop: 4 }]}>
+              For informational purposes only. This is not legal advice. Consult a licensed attorney for guidance specific to your situation.
+            </Text>
           </>
         )}
 
