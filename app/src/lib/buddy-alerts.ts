@@ -151,11 +151,12 @@ export function generateAlerts(cases: Case[]): BuddyAlert[] {
   // General tips when there are active cases
   const activeCases = cases.filter(c => ['denied', 'appealing', 'pending'].includes(c.status));
   if (activeCases.length > 0 && alerts.length < 2) {
+    const firstActive = activeCases[0];
     const tips = [
-      { title: 'Document everything', message: 'Keep a log of every call, email and letter. Note the date, time, who you spoke with and what was said. This paper trail wins appeals.', mood: 'thinking' as const },
-      { title: 'Request peer-to-peer review', message: 'Your doctor can speak directly with the insurer\'s medical director. This often reverses denials faster than written appeals.', mood: 'curious' as const },
-      { title: 'Know your rights', message: 'Federal law requires insurers to tell you exactly why they denied your claim and how to appeal. If they haven\'t, that\'s a violation.', mood: 'determined' as const },
-      { title: 'Don\'t take the first "no"', message: 'Insurance companies count on people giving up. Most denials are overturned when patients push back. You\'ve already started. Keep going.', mood: 'excited' as const },
+      { title: 'Document everything', message: 'Log every call — who you spoke with, what was said. Paper trails win appeals.', mood: 'thinking' as const, actionLabel: 'Log a Call', actionRoute: `/case/${firstActive.id}` },
+      { title: 'Request peer-to-peer review', message: 'Your doctor can call the insurer\'s medical director directly. This often reverses denials fast.', mood: 'curious' as const, actionLabel: 'View Case', actionRoute: `/case/${firstActive.id}` },
+      { title: 'Know your rights', message: 'Insurers must tell you exactly why they denied and how to appeal. If they didn\'t, that\'s a violation.', mood: 'determined' as const, actionLabel: 'Your Rights', actionRoute: '/rights' },
+      { title: 'Don\'t take the first "no"', message: 'Most denials are overturned when patients push back. Keep going.', mood: 'excited' as const, actionLabel: 'View Case', actionRoute: `/case/${firstActive.id}` },
     ];
     const tip = tips[Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % tips.length]; // Rotate daily
     alerts.push({
@@ -165,12 +166,14 @@ export function generateAlerts(cases: Case[]): BuddyAlert[] {
       message: tip.message,
       mood: tip.mood,
       priority: 'low',
+      actionLabel: tip.actionLabel,
+      actionRoute: tip.actionRoute,
     });
   }
 
-  // Sort by priority
+  // Sort by priority, cap at 3 to avoid alert fatigue
   const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
   alerts.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
-  return alerts;
+  return alerts.slice(0, 3);
 }

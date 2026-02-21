@@ -39,7 +39,7 @@ export default function CasesScreen() {
   const { colors, typography } = useTheme();
   const router = useRouter();
   const { buddyStats, isPro } = useBuddy();
-  const rank = getBuddyRank(buddyStats);
+  const rank = buddyStats ? getBuddyRank(buddyStats) : undefined;
   const { filter } = useLocalSearchParams<{ filter?: string }>();
   const [cases, setCases] = useState<Case[]>([]);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
