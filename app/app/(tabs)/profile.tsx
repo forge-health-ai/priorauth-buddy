@@ -307,7 +307,6 @@ export default function ProfileScreen() {
 
         <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.footer}>
           <Text style={[typography.caption, { color: colors.textTertiary, textAlign: 'center' }]}>PriorAuth Buddy v1.0.0</Text>
-          <Text style={[typography.caption, { color: colors.textTertiary, textAlign: 'center' }]}>A FORGE Labs Product</Text>
           <Text style={[typography.caption, { color: colors.textTertiary, textAlign: 'center' }]}>2026 Forge Partners Inc.</Text>
         </Animated.View>
       </ScrollView>
