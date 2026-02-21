@@ -21,6 +21,7 @@ import { getUserBuddyStats, getBuddyRank, UserBuddyStats } from '../../src/lib/b
 import { getSubscriptionStatus } from '../../src/lib/subscription';
 import { useBuddy } from '../../src/context/BuddyContext';
 import { EvolutionPath } from '../../src/components/EvolutionPath';
+import { FeedbackPrompt, trackFeedbackAction } from '../../src/components/FeedbackPrompt';
 
 function getGreeting(name?: string): string {
   const hour = new Date().getHours();
@@ -47,6 +48,7 @@ export default function HomeScreen() {
   const [userName, setUserName] = useState<string>('');
   const [alerts, setAlerts] = useState<BuddyAlert[]>([]);
   const [showEvolution, setShowEvolution] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const { rank, isPro, stats: buddyStats, refresh: refreshBuddy } = useBuddy();
 
   const fetchCases = useCallback(async () => {
@@ -104,6 +106,8 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchCases();
+      // Check if we should prompt for feedback
+      trackFeedbackAction().then(shouldShow => { if (shouldShow) setShowFeedback(true); });
     }, [fetchCases])
   );
 
@@ -238,6 +242,8 @@ export default function HomeScreen() {
           <FORGEButton title="Write Appeal" onPress={() => router.push('/(tabs)/appeals')} variant="secondary" />
         </Animated.View>
       </ScrollView>
+
+      <FeedbackPrompt visible={showFeedback} onClose={() => setShowFeedback(false)} />
 
       {rank && (
         <EvolutionPath

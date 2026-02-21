@@ -20,6 +20,7 @@ import {
   CaseEvent 
 } from '../../src/lib/local-storage';
 import { generateAppealLetter, generateDOIComplaint, analyzeDenialLetter, DenialAnalysis } from '../../src/lib/ai';
+import { trackFeedbackAction } from '../../src/components/FeedbackPrompt';
 import { emailLetterToSelf } from '../../src/lib/email-letter';
 import { submitAnonymousOutcome } from '../../src/lib/outcome-tracking';
 import { getUserBuddyStats, getBuddyRank, checkRankUp } from '../../src/lib/buddy-evolution';
@@ -154,6 +155,7 @@ export default function CaseDetailScreen() {
           title: 'Appeal Letter Generated',
           description: 'AI appeal letter generated and saved',
         });
+        trackFeedbackAction(); // Track for feedback prompt
 
         // Refresh Buddy evolution (filing appeals changes rank)
         refreshBuddy();

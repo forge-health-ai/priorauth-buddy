@@ -28,9 +28,25 @@ interface CoachMessage {
   coachFeedback?: string;
 }
 
+// Content guardrails — block inappropriate input before it hits the AI
+const BLOCKED_PATTERNS = [
+  /\b(kill|murder|suicide|self[- ]?harm|bomb|terrorist|terrorism|weapon|shoot|attack|assault)\b/i,
+  /\b(fuck|shit|bitch|cunt|dick|cock|pussy|ass[- ]?hole|faggot|nigger|retard)\b/i,
+  /\b(child[- ]?porn|cp|molest|rape|trafficking)\b/i,
+  /\b(hack|exploit|inject|xss|sql[- ]?injection|phishing)\b/i,
+];
+
+const GUARDRAIL_MESSAGE = "I'm here to help you fight insurance denials. I can't help with that topic. Let's get back to your case.";
+
+function isContentSafe(text: string): boolean {
+  return !BLOCKED_PATTERNS.some(pattern => pattern.test(text));
+}
+
 // System prompts (same as client-side)
 const SYSTEM_PROMPTS: Record<string, string> = {
-  generateAppeal: `You are a medical appeal letter expert. Generate a professional, persuasive appeal letter for a patient whose prior authorization or insurance claim was denied.
+  generateAppeal: `You are a medical appeal letter expert working inside PriorAuth Buddy. Generate a professional, persuasive appeal letter for a patient whose prior authorization or insurance claim was denied.
+
+GUARDRAIL: You ONLY help with insurance appeals, prior authorizations and healthcare claim disputes. If asked about anything unrelated, harmful, violent, sexual, illegal or off-topic, respond with: "I'm here to help you fight insurance denials. Let's focus on your case."
 
 Rules:
 - Use formal but empathetic tone
@@ -46,7 +62,9 @@ Rules:
 
   generateComplaint: `You are an expert at writing formal insurance complaints to state Departments of Insurance. Be factual, concise and professional. Do NOT use em-dashes or Oxford commas.`,
 
-  getCoachResponse: `You are a training partner helping someone practice calling their insurance company about a prior authorization. Play the role of an insurance representative. Be realistic but not hostile. After each user response, briefly stay in character, then add a [COACH] section with feedback on their tone, assertiveness, and what to try next. If you know specific things about this insurer's patterns, weave that into your coaching. Keep responses under 150 words.`,
+  getCoachResponse: `You are a training partner inside PriorAuth Buddy, helping someone practice calling their insurance company about a prior authorization. Play the role of an insurance representative. Be realistic but not hostile. After each user response, briefly stay in character, then add a [COACH] section with feedback on their tone, assertiveness, and what to try next. If you know specific things about this insurer's patterns, weave that into your coaching. Keep responses under 150 words.
+
+GUARDRAIL: Stay in the insurance call roleplay ONLY. If the user says anything violent, threatening, sexual, or completely off-topic, break character and respond: "I'm here to help you practice insurance calls. Let's stay focused on winning your appeal." Then continue the coaching.`,
 
   analyzeDenial: `You are an expert at analyzing insurance denial letters. Extract key information and provide actionable appeal strategies. Be concise and specific.`,
 };
@@ -280,6 +298,22 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     if (!action || !payload) {
       res.statusCode = 400;
       res.end(JSON.stringify({ error: 'Missing action or payload' }));
+      return;
+    }
+
+    // Content guardrail check — scan all string values in payload
+    const allText = JSON.stringify(payload);
+    if (!isContentSafe(allText)) {
+      res.setHeader('Content-Type', 'application/json');
+      res.statusCode = 200;
+      // Return a safe response that fits each action type
+      const safeResponses: Record<string, any> = {
+        generateAppeal: { letter: GUARDRAIL_MESSAGE, model: MODEL, inputTokens: 0, outputTokens: 0, costUsd: 0 },
+        generateComplaint: { complaint: GUARDRAIL_MESSAGE, costUsd: 0 },
+        getCoachResponse: { repResponse: GUARDRAIL_MESSAGE, feedback: '', mood: 'thinking', costUsd: 0 },
+        analyzeDenial: { denialReason: GUARDRAIL_MESSAGE, clinicalCriteria: '', timeline: '', appealAngles: [], nextSteps: '', costUsd: 0 },
+      };
+      res.end(JSON.stringify(safeResponses[action] || { error: GUARDRAIL_MESSAGE }));
       return;
     }
 
