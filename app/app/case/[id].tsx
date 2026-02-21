@@ -20,6 +20,7 @@ import {
   CaseEvent 
 } from '../../src/lib/local-storage';
 import { generateAppealLetter, generateDOIComplaint, analyzeDenialLetter, scanDenialLetter, DenialAnalysis, ScanResult } from '../../src/lib/ai';
+import { getInsurerIntel } from '../../src/data/insurer-intel';
 import * as ImagePicker from 'expo-image-picker';
 import { trackFeedbackAction } from '../../src/components/FeedbackPrompt';
 import { emailLetterToSelf } from '../../src/lib/email-letter';
@@ -429,6 +430,41 @@ export default function CaseDetailScreen() {
             </View>
           )}
         </Animated.View>
+
+        {caseData.insurer_name && (() => {
+          const intel = getInsurerIntel(caseData.insurer_name);
+          if (!intel) return null;
+          return (
+            <Animated.View entering={FadeInDown.delay(125).springify()} style={{ paddingHorizontal: 20, marginBottom: 8 }}>
+              <View style={[styles.intelCard, { backgroundColor: colors.surface, borderColor: colors.tabBarBorder }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <MiniBuddy mood="thinking" size={32} />
+                  <View>
+                    <Text style={[typography.body, { color: colors.text, fontFamily: 'Outfit_600SemiBold' }]}>Know Your Opponent</Text>
+                    <Text style={[typography.caption, { color: colors.textSecondary }]}>Intelligence on {intel.name}</Text>
+                  </View>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 16, marginBottom: 8 }}>
+                  <View>
+                    <Text style={[typography.caption, { color: colors.textSecondary }]}>Denial Rate</Text>
+                    <Text style={[typography.h3, { color: colors.error }]}>{intel.denialRate}</Text>
+                  </View>
+                  <View>
+                    <Text style={[typography.caption, { color: colors.textSecondary }]}>Avg Appeal Time</Text>
+                    <Text style={[typography.h3, { color: colors.text }]}>{intel.avgAppealTime}</Text>
+                  </View>
+                </View>
+                <Text style={[typography.caption, { color: colors.primary, fontFamily: 'Outfit_600SemiBold', marginBottom: 2 }]}>Best Strategy</Text>
+                <Text style={[typography.caption, { color: colors.text, marginBottom: 6 }]}>{intel.bestStrategy}</Text>
+                {intel.proTip && (
+                  <View style={{ backgroundColor: `${colors.primary}10`, borderRadius: radii.card, padding: 8, marginTop: 4 }}>
+                    <Text style={[typography.caption, { color: colors.primary }]}>💡 {intel.proTip}</Text>
+                  </View>
+                )}
+              </View>
+            </Animated.View>
+          );
+        })()}
 
         <Animated.View entering={FadeInDown.delay(130).springify()} style={styles.quickActionsSection}>
           <Text style={[typography.h3, { color: colors.text, marginBottom: 8 }]}>Quick Actions</Text>
@@ -985,6 +1021,7 @@ const styles = StyleSheet.create({
   timelineDot: { width: 10, height: 10, borderRadius: 5, marginTop: 4 },
   timelineContent: { flex: 1, gap: 2 },
   timelineLine: { position: 'absolute', left: 4, top: 22, width: 2, height: 40 },
+  intelCard: { borderRadius: radii.card, borderWidth: 1, padding: 14 },
   quickActionsSection: { paddingHorizontal: 20, marginBottom: 8 },
   quickActionCard: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: radii.card, borderWidth: 1 },
   letterSection: { marginHorizontal: 20, marginBottom: 16, borderRadius: 16, borderWidth: 1, padding: 16, gap: 12 },
