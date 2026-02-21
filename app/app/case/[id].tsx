@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, Pressable, Alert, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -76,6 +76,7 @@ export default function CaseDetailScreen() {
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [isPro, setIsPro] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     fetchCaseDetails();
@@ -145,6 +146,8 @@ export default function CaseDetailScreen() {
 
       // Show appeal letter inline FIRST
       setAppealLetter(result.letter);
+      // Auto-scroll to show the letter and action buttons
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 300);
 
       // Save appeal to local storage (PHI compliance)
       const { data: { user } } = await supabase.auth.getUser();
@@ -358,7 +361,7 @@ export default function CaseDetailScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.springify()}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={[typography.h1, { color: colors.text, flex: 1 }]}>{caseData.procedure_name}</Text>
