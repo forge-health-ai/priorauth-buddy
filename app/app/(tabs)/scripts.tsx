@@ -13,6 +13,7 @@ const SCRIPT_ICONS: Record<string, string> = {
   '2': '🔥',
   '3': '🔎',
   '4': '🎯',
+  '5': '🤝',
 };
 
 const SCRIPTS: Array<{ id: string; scenario: string; buddyMood: BuddyMood; intro: string; phrases: string[]; rebuttals: Record<string, string>; tips: string[] }> = [
@@ -48,6 +49,29 @@ const SCRIPTS: Array<{ id: string; scenario: string; buddyMood: BuddyMood; intro
       "That's our policy": 'I understand you have policies, but federal and state regulations require specific clinical justification for denials. Can I speak to a medical reviewer?',
     },
     tips: ['Get the denial reason in writing', 'Ask for the specific policy or guideline used', 'Request a peer-to-peer review immediately'],
+  },
+  {
+    id: '5', scenario: 'Requesting Peer-to-Peer Review', buddyMood: 'determined' as BuddyMood,
+    intro: "Hi, I'm calling to request a peer-to-peer review between my treating physician and your medical director regarding a denied prior authorization.",
+    phrases: [
+      'My doctor would like to discuss the clinical necessity directly with your medical reviewer',
+      'When is the earliest available peer-to-peer review slot?',
+      'Can you confirm the name and credentials of the reviewing physician?',
+      'Please provide the direct scheduling line for peer-to-peer reviews',
+      'What documentation should my physician have ready for the review?',
+    ],
+    rebuttals: {
+      "That's not available": 'Federal and state regulations require insurers to offer peer-to-peer review when requested. I am formally requesting one now. Can I speak with a supervisor?',
+      'The decision is final': 'A peer-to-peer review is part of the appeals process and must be offered before a final determination. Please escalate this request.',
+      'Your doctor needs to call us': 'I understand. Please provide the direct phone number and hours for peer-to-peer scheduling so my physician can call today.',
+    },
+    tips: [
+      'Peer-to-peer review is the #1 most effective appeal strategy per AMA research',
+      'Your physician speaks directly with the insurance medical director',
+      'Have all clinical documentation ready before the scheduled call',
+      'Request the review in writing as well as by phone for a paper trail',
+      'Many denials are overturned during the peer-to-peer conversation itself',
+    ],
   },
   {
     id: '4', scenario: 'Escalation to Supervisor', buddyMood: 'celebrating' as BuddyMood,
@@ -151,6 +175,22 @@ export default function ScriptsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+        <Animated.View entering={FadeInDown.springify()}>
+          <Pressable
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/rights'); }}
+            style={[styles.scriptCard, { backgroundColor: colors.surface, borderLeftWidth: 3, borderLeftColor: colors.primary }]}
+          >
+            <View style={styles.scriptHeader}>
+              <Text style={{ fontSize: 22 }}>⚖️</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[typography.h3, { color: colors.text }]}>Know Your Rights</Text>
+                <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 2 }]}>State-specific appeal rights and contacts</Text>
+              </View>
+              <Text style={{ color: colors.primary, fontSize: 18 }}>→</Text>
+            </View>
+          </Pressable>
+        </Animated.View>
+
         {SCRIPTS.map((script, i) => (
           <Animated.View key={script.id} entering={FadeInDown.delay(i * 80).springify()}>
             <ScriptCard

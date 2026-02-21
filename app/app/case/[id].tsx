@@ -23,7 +23,9 @@ import { generateAppealLetter, generateDOIComplaint, analyzeDenialLetter, Denial
 import { trackFeedbackAction } from '../../src/components/FeedbackPrompt';
 import { emailLetterToSelf } from '../../src/lib/email-letter';
 import { submitAnonymousOutcome } from '../../src/lib/outcome-tracking';
+import { CallLog } from '../../src/components/CallLog';
 import { getUserBuddyStats, getBuddyRank, checkRankUp } from '../../src/lib/buddy-evolution';
+import { DocumentChecklist } from '../../src/components/DocumentChecklist';
 import { RankUpCelebration } from '../../src/components/RankUpCelebration';
 import { ConfettiFall } from '../../src/components/ConfettiFall';
 import { getSubscriptionStatus } from '../../src/lib/subscription';
@@ -70,6 +72,7 @@ export default function CaseDetailScreen() {
   const [complaintLetter, setComplaintLetter] = useState<string | null>(null);
   const [rankUpData, setRankUpData] = useState<{ rank: BuddyRank; wins: number; denials: number } | null>(null);
   const [isPro, setIsPro] = useState(false);
+  const [showChecklist, setShowChecklist] = useState(false);
 
   useEffect(() => {
     fetchCaseDetails();
@@ -378,6 +381,26 @@ export default function CaseDetailScreen() {
           )}
         </Animated.View>
 
+        <Animated.View entering={FadeInDown.delay(140).springify()}>
+          <CallLog caseId={caseData.id} insurerName={caseData.insurer_name || 'your insurer'} />
+        </Animated.View>
+
+        {(caseData.status === 'denied' || caseData.status === 'appealing') && (
+          <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.actionsSection}>
+            <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowChecklist(!showChecklist); }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={[typography.h3, { color: colors.text }]}>📋 Document Checklist</Text>
+                <Text style={{ color: colors.textTertiary, fontSize: 18 }}>{showChecklist ? '▲' : '▼'}</Text>
+              </View>
+            </Pressable>
+            {showChecklist && (
+              <Animated.View entering={FadeInDown.duration(200)}>
+                <DocumentChecklist caseId={caseData.id} />
+              </Animated.View>
+            )}
+          </Animated.View>
+        )}
+
         <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.actionsSection}>
           <Text style={[typography.h3, { color: colors.text }]}>Actions</Text>
           <View style={styles.actionButtons}>
@@ -508,6 +531,7 @@ export default function CaseDetailScreen() {
             <View style={styles.letterActions}>
               <FORGEButton title="Copy to Clipboard" onPress={() => emailLetterToSelf(`Appeal Letter - ${caseData.procedure_name}`, appealLetter!)} />
               <FORGEButton title="Share" onPress={() => Share.share({ title: 'Appeal Letter', message: appealLetter })} variant="secondary" />
+              <FORGEButton title="📧 Send to My Doctor" onPress={() => Share.share({ title: `Appeal Letter - ${caseData.procedure_name}`, message: `Hi Doctor,\n\nI've drafted an appeal letter for my denied ${caseData.procedure_name} prior authorization with ${caseData.insurer_name || 'my insurer'}. Could you please review it and consider signing or submitting a supporting Letter of Medical Necessity?\n\nI would also appreciate if we could schedule a peer-to-peer review with the insurer's medical director, as this is often the most effective way to overturn denials.\n\nThank you for your support.\n\n---\n\n${appealLetter}` })} variant="secondary" />
             </View>
           </Animated.View>
         )}
