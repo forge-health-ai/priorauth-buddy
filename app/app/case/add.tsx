@@ -10,7 +10,7 @@ import { MiniBuddy } from '../../src/components/MiniBuddy';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
 import { supabase } from '../../src/lib/supabase';
 import { createCase, createCaseEvent, CaseStatus, UrgencyLevel } from '../../src/lib/local-storage';
-import { getInsurerIntel, InsurerIntel } from '../../src/data/insurer-intel';
+import { getInsurerIntel, InsurerIntel, estimateAppealDeadline } from '../../src/data/insurer-intel';
 
 const PROCEDURE_TYPES = [
   { value: 'imaging', label: 'Imaging (MRI, CT, X-ray)' },
@@ -95,9 +95,9 @@ export default function AddCaseScreen() {
         return;
       }
 
-      // Calculate appeal deadline (typically 180 days from denial or 60 days for some plans)
-      const appealDeadline = new Date();
-      appealDeadline.setDate(appealDeadline.getDate() + 60); // 60 days from now as default
+      // Calculate appeal deadline from insurer's known window + denial date
+      const denialDateObj = form.denialDate ? new Date(form.denialDate) : new Date();
+      const { deadline: appealDeadline, windowDays } = estimateAppealDeadline(form.insurerName, denialDateObj);
 
       // Use local storage instead of Supabase for PHI compliance
       const caseData = await createCase(user.id, {
@@ -362,6 +362,42 @@ export default function AddCaseScreen() {
           numberOfLines={3}
         />
       </View>
+
+      {form.denialReason ? (
+        <View style={styles.field}>
+          <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: 6 }]}>When were you denied? (MM/DD/YYYY)</Text>
+          <TextInput
+            style={[styles.input, { borderColor: colors.tabBarBorder, color: colors.text, fontFamily: 'Outfit_400Regular' }]}
+            placeholder="e.g. 02/15/2026"
+            placeholderTextColor={colors.textTertiary}
+            value={form.denialDate}
+            onChangeText={v => updateField('denialDate', v)}
+            keyboardType="numbers-and-punctuation"
+          />
+          {(() => {
+            const intel = getInsurerIntel(form.insurerName);
+            const windowDays = intel?.appealWindowDays || 30;
+            const denialDateObj = form.denialDate ? new Date(form.denialDate) : new Date();
+            const deadlineDate = new Date(denialDateObj);
+            deadlineDate.setDate(deadlineDate.getDate() + windowDays);
+            const daysLeft = Math.ceil((deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            return (
+              <View style={[styles.bubble, { backgroundColor: `${daysLeft <= 7 ? colors.error : colors.primary}10`, marginTop: 8, padding: 10 }]}>
+                <Text style={[typography.caption, { color: daysLeft <= 7 ? colors.error : colors.primary }]}>
+                  🛡️ Buddy's estimate: {form.insurerName} typically allows {windowDays} days to appeal.{' '}
+                  {form.denialDate
+                    ? `That gives you until ${deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} (~${daysLeft} days left).`
+                    : `From today, that's ${deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.`
+                  }
+                </Text>
+                <Text style={[typography.caption, { color: colors.textTertiary, fontSize: 11, marginTop: 2 }]}>
+                  This is an estimate. Check your denial letter for the exact deadline.
+                </Text>
+              </View>
+            );
+          })()}
+        </View>
+      ) : null}
 
       <View style={styles.field}>
         <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: 6 }]}>Additional Notes</Text>

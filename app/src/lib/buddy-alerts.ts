@@ -71,6 +71,21 @@ export function generateAlerts(cases: Case[]): BuddyAlert[] {
       }
     }
 
+    // Missing deadline nudge
+    if (c.status === 'denied' && !c.appeal_deadline) {
+      alerts.push({
+        id: `missing-deadline-${c.id}`,
+        type: 'coaching',
+        title: 'Set your appeal deadline!',
+        message: `"${c.procedure_name}" was denied but you haven't set an appeal deadline. Most insurers give you 30-180 days. Don't lose track.`,
+        mood: 'thinking',
+        actionLabel: 'Update Case',
+        actionRoute: `/case/${c.id}`,
+        priority: 'high',
+        caseId: c.id,
+      });
+    }
+
     // Stage-based coaching
     if (c.status === 'denied' && !c.appeal_deadline) {
       alerts.push({
