@@ -155,13 +155,13 @@ export default function PrivacyPolicyScreen() {
             </View>
           ))}
           <Text style={[bodyStyle, { marginTop: 12 }]}>
-            To exercise any of these rights, email us at privacy@forgehealth.ai. We will respond within 30 days.
+            To exercise any of these rights, email us at privacy@priorauthbuddy.app. We will respond within 30 days.
           </Text>
         </Section>
 
         <Section title="Children's Privacy" delay={450}>
           <Text style={bodyStyle}>
-            PriorAuth Buddy is designed for adults aged 18 and older. We do not knowingly collect information from anyone under 18. If you believe a minor has provided us with personal information, please contact us at privacy@forgehealth.ai and we will promptly delete it.
+            PriorAuth Buddy is designed for adults aged 18 and older. We do not knowingly collect information from anyone under 18. If you believe a minor has provided us with personal information, please contact us at privacy@priorauthbuddy.app and we will promptly delete it.
           </Text>
         </Section>
 
@@ -177,7 +177,7 @@ export default function PrivacyPolicyScreen() {
           </Text>
           <Text style={[boldStyle, { marginTop: 12 }]}>Forge Partners Inc.</Text>
           <Text style={bodyStyle}>Ontario, Canada</Text>
-          <Text style={[bodyStyle, { color: colors.primary, marginTop: 4 }]}>privacy@forgehealth.ai</Text>
+          <Text style={[bodyStyle, { color: colors.primary, marginTop: 4 }]}>privacy@priorauthbuddy.app</Text>
         </Section>
 
         <View style={styles.footer}>
