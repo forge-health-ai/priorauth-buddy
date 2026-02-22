@@ -566,7 +566,7 @@ export default function CaseDetailScreen() {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   // Update case status in local storage (PHI compliance)
                   const { data: { user } } = await supabase.auth.getUser();
-                  const newStatus = opt.status === 'approved' ? 'approved' : opt.status === 'denied_final' ? 'denied' : 'appealing';
+                  const newStatus = opt.status === 'approved' ? 'approved' : opt.status === 'denied_final' ? 'denied' : 'pending';
                   if (user) {
                     await updateCase(caseData.id, user.id, { status: newStatus });
                   }

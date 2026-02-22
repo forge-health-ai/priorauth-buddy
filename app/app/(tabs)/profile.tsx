@@ -9,6 +9,7 @@ import { useThemeMode, AppearanceMode } from '../../src/context/ThemeContext';
 import { BuddyMascot } from '../../src/components/BuddyMascot';
 import { FORGEButton } from '../../src/components/FORGEButton';
 import { supabase } from '../../src/lib/supabase';
+import { getCases, getAllAppeals, getCallLogCount } from '../../src/lib/local-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { getUserBuddyStats, getBuddyRank, UserBuddyStats } from '../../src/lib/buddy-evolution';
 import { RankProgressCard } from '../../src/components/RankProgressCard';
@@ -51,36 +52,17 @@ export default function ProfileScreen() {
       if (user) {
         setUserEmail(user.email || '');
 
-        // Fetch cases count
-        const { count: casesCount } = await supabase
-          .from('cases')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id);
-
-        // Fetch appeals count
-        const { count: appealsCount } = await supabase
-          .from('appeals')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id);
-
-        // Fetch call logs count (from case_updates with type 'call')
-        const { count: callsCount } = await supabase
-          .from('case_updates')
-          .select('*', { count: 'exact', head: true })
-          .eq('update_type', 'call');
-
-        // Fetch wins (appeal_approved or approved status)
-        const { count: winsCount } = await supabase
-          .from('cases')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .in('status', ['appeal_approved', 'approved']);
+        // Fetch stats from local storage (PHI compliance)
+        const localCases = await getCases(user.id);
+        const localAppeals = await getAllAppeals(user.id);
+        const localCallLogs = await getCallLogCount(user.id);
+        const winsCount = localCases.filter(c => ['approved', 'appeal_won'].includes(c.status)).length;
 
         setStats({
-          cases: casesCount ?? 0,
-          appeals: appealsCount ?? 0,
-          calls: callsCount ?? 0,
-          wins: winsCount ?? 0,
+          cases: localCases.length,
+          appeals: localAppeals.length,
+          calls: localCallLogs,
+          wins: winsCount,
         });
       }
 
@@ -181,15 +163,15 @@ export default function ProfileScreen() {
           <Text style={[typography.h3, { color: colors.textSecondary, marginBottom: 12 }]}>YOUR STATS</Text>
           <View style={styles.statsGrid}>
             {[
-              { label: 'Cases Tracked', value: String(stats.cases), color: colors.primary },
-              { label: 'Appeals Written', value: String(stats.appeals), color: colors.accent },
-              { label: 'Calls Logged', value: String(stats.calls), color: colors.secondary },
-              { label: 'Wins', value: String(stats.wins), color: colors.success },
+              { label: 'Cases Tracked', value: String(stats.cases), color: colors.primary, filter: undefined },
+              { label: 'Appeals Written', value: String(stats.appeals), color: colors.accent, filter: undefined },
+              { label: 'Calls Logged', value: String(stats.calls), color: colors.secondary, filter: undefined },
+              { label: 'Wins', value: String(stats.wins), color: colors.success, filter: 'won' },
             ].map((stat, i) => (
-              <View key={i} style={[styles.statBox, { backgroundColor: colors.surface }]}>
+              <Pressable key={i} onPress={() => { Haptics.selectionAsync(); router.push({ pathname: '/(tabs)/cases', params: stat.filter ? { filter: stat.filter } : {} }); }} style={[styles.statBox, { backgroundColor: colors.surface }]}>
                 <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 24, color: stat.color }}>{stat.value}</Text>
                 <Text style={[typography.caption, { color: colors.textSecondary }]}>{stat.label}</Text>
-              </View>
+              </Pressable>
             ))}
           </View>
         </Animated.View>

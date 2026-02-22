@@ -514,6 +514,22 @@ export async function getLocalStats(userId: string): Promise<{
   }
 }
 
+/** Count total call log entries across all cases */
+export async function getCallLogCount(userId: string): Promise<number> {
+  try {
+    const cases = await getCases(userId);
+    let total = 0;
+    for (const c of cases) {
+      const raw = await AsyncStorage.getItem(`buddy_call_log_${c.id}`);
+      if (raw) {
+        const entries = JSON.parse(raw);
+        total += Array.isArray(entries) ? entries.length : 0;
+      }
+    }
+    return total;
+  } catch { return 0; }
+}
+
 // Re-export types for compatibility with existing code
 export type Case = LocalCase;
 export type Appeal = LocalAppeal;
