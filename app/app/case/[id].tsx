@@ -461,6 +461,9 @@ export default function CaseDetailScreen() {
                     <Text style={[typography.caption, { color: colors.primary }]}>💡 {intel.proTip}</Text>
                   </View>
                 )}
+                <Text style={[typography.caption, { color: colors.textTertiary, fontSize: 10, marginTop: 6 }]}>
+                  Based on publicly available data and reports. Estimates may vary.
+                </Text>
               </View>
             </Animated.View>
           );
