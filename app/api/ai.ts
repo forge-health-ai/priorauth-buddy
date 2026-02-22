@@ -257,14 +257,16 @@ function generateCoachPrompt(
   userMessage: string,
   isEnding: boolean
 ): string {
+  // Only send last 3 exchanges to keep context tight and prevent verbose responses
+  const recentHistory = history.slice(-6);
   return `SCENARIO: ${scenario}
 
-CONVERSATION HISTORY:
-${history.map(m => `${m.role === 'user' ? 'User' : 'Insurance Rep'}: ${m.content}`).join('\n\n')}
+RECENT CONVERSATION:
+${recentHistory.map(m => `${m.role === 'user' ? 'User' : 'Insurance Rep'}: ${m.content}`).join('\n\n')}
 
 User: ${userMessage}
 
-${isEnding ? 'This is the final exchange. Provide a closing response and then a final [COACH] section with overall confidence score (0-100) and 3-5 personalized tips.' : 'Respond as the insurance representative, then provide [COACH] feedback.'}`;
+${isEnding ? 'This is the final exchange. Provide a closing response and then a final [COACH] section with overall confidence score (0-100) and 3-5 personalized tips.' : 'Respond as the insurance representative (keep it under 4 sentences), then add [COACH] with ONE short tip (max 2 sentences, exact words to say). Do NOT repeat prior conversation.'}`;
 }
 
 // Generate denial analysis prompt
@@ -421,7 +423,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         const isEnding = exchangeCount >= 7;
         const userPrompt = generateCoachPrompt(scenario, history, userMessage, isEnding);
 
-        const data = await callAnthropic(SYSTEM_PROMPTS.getCoachResponse, userPrompt, 500);
+        const data = await callAnthropic(SYSTEM_PROMPTS.getCoachResponse, userPrompt, isEnding ? 500 : 300);
         const fullText = data.content?.[0]?.text || '';
         const inputTokens = data.usage?.input_tokens || 0;
         const outputTokens = data.usage?.output_tokens || 0;
