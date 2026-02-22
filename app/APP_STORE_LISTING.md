@@ -4,29 +4,31 @@
 PriorAuth Buddy
 
 ## Subtitle (30 chars max)
-Fight Insurance Denials & Win
+AI That Fights Your Denials
 
 ## Promotional Text (170 chars — can update anytime without review)
-Your insurance denied your claim. Don't give up. Buddy helps you write appeals, practice calls and fight back with real strategies that work. Join thousands fighting back.
+They use AI to deny your claims in seconds. Now you have AI that fights back. Buddy writes appeals, coaches your calls and tracks every deadline. Your fight starts here.
 
 ## Description (4000 chars max)
 
-Your insurance company denied your claim. They're counting on you to give up.
+Insurance companies use AI to deny your claims in seconds. Now you have AI on your side.
 
-Don't.
+Your insurer denied your claim. They're counting on you to give up. Most people do. But you downloaded Buddy.
 
-PriorAuth Buddy is the first app that fights alongside you. Not a chatbot. Not a form letter generator. A real companion that knows your case, tracks your deadlines and coaches you through every step of the appeal process.
+PriorAuth Buddy is the first AI-powered companion that fights alongside you. Not a chatbot. Not a form letter generator. A real fighting partner that knows your case, studies your insurer's tactics, tracks your deadlines and coaches you through every step of the appeal process.
+
+They have algorithms. Now you have Buddy.
 
 HERE'S WHAT BUDDY DOES:
 
 KNOW YOUR OPPONENT
-Buddy has intelligence on every major insurer — their denial rates, common tactics, appeal windows, escalation paths and best strategies to beat them. When you pick your insurance company, Buddy tells you exactly how to fight them.
+Buddy has intelligence on every major insurer — their denial rates, common tactics, appeal windows, escalation paths and weaknesses. When you pick your insurance company, Buddy tells you exactly how to beat them. They study you. Now you study them.
 
 AI APPEAL LETTERS
-Generate personalized appeal letters based on your specific denial reason, procedure and insurer. Not templates — real letters built from your case details that reference the right regulations and clinical guidelines.
+Buddy's AI writes personalized appeal letters based on your specific denial reason, procedure and insurer. Not templates — real letters built from your case details that reference the right regulations and clinical guidelines. What used to take hours now takes seconds.
 
-CALL COACH
-Terrified to call your insurance company? Practice first. Buddy plays the insurance rep while you rehearse. Get real-time coaching on exactly what to say, when to push back and how to stay calm under pressure.
+AI CALL COACH
+Terrified to call your insurance company? Practice first. Buddy's AI plays the insurance rep while you rehearse. Get real-time coaching on exactly what to say, when to push back and how to stay calm. Walk into that call prepared.
 
 PHONE SCRIPTS
 Know exactly what to say before you pick up the phone. Scripts for every scenario — "That's our policy," "You can appeal," "We need more documentation" — with proven responses that work.
@@ -40,8 +42,8 @@ Your rights depend on where you live. Buddy shows you your state's appeal deadli
 DOCUMENT EVERYTHING
 Log every call with your insurer — who you spoke with, what they said, reference numbers. Build the paper trail that wins appeals. Share your appeal letter directly with your doctor for review and signature.
 
-SCAN YOUR DENIAL LETTER
-Take a photo of your denial letter and Buddy reads it for you. Extracts the insurer name, procedure, denial reason and appeal deadline so you can get started fighting immediately.
+AI DENIAL SCANNER
+Take a photo of your denial letter and Buddy's AI reads it instantly. Extracts the insurer name, procedure, denial reason and appeal deadline so you can start fighting immediately. No more decoding insurance jargon.
 
 THE NUMBERS DON'T LIE:
 - Insurance companies deny over 200 million claims per year
@@ -62,6 +64,8 @@ PRO FEATURES ($4.99/month):
 - Priority support
 
 Your first case is always free. Try Buddy, see if it works for you, then decide.
+
+They use AI to say no. Now you use AI to fight back.
 
 Built by people who got denied too. We know how it feels.
 
