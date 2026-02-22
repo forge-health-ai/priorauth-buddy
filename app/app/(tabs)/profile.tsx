@@ -163,12 +163,12 @@ export default function ProfileScreen() {
           <Text style={[typography.h3, { color: colors.textSecondary, marginBottom: 12 }]}>YOUR STATS</Text>
           <View style={styles.statsGrid}>
             {[
-              { label: 'Cases Tracked', value: String(stats.cases), color: colors.primary, filter: undefined },
-              { label: 'Appeals Written', value: String(stats.appeals), color: colors.accent, filter: undefined },
-              { label: 'Calls Logged', value: String(stats.calls), color: colors.secondary, filter: undefined },
-              { label: 'Wins', value: String(stats.wins), color: colors.success, filter: 'won' },
+              { label: 'Cases Tracked', value: String(stats.cases), color: colors.primary, route: '/(tabs)/cases' as const, params: {} },
+              { label: 'Appeals Written', value: String(stats.appeals), color: colors.accent, route: '/(tabs)/appeals' as const, params: {} },
+              { label: 'Calls Logged', value: String(stats.calls), color: colors.secondary, route: '/(tabs)/cases' as const, params: {} },
+              { label: 'Wins', value: String(stats.wins), color: colors.success, route: '/(tabs)/cases' as const, params: { filter: 'won' } },
             ].map((stat, i) => (
-              <Pressable key={i} onPress={() => { Haptics.selectionAsync(); router.push({ pathname: '/(tabs)/cases', params: stat.filter ? { filter: stat.filter } : {} }); }} style={[styles.statBox, { backgroundColor: colors.surface }]}>
+              <Pressable key={i} onPress={() => { Haptics.selectionAsync(); router.push({ pathname: stat.route, params: stat.params }); }} style={[styles.statBox, { backgroundColor: colors.surface }]}>
                 <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 24, color: stat.color }}>{stat.value}</Text>
                 <Text style={[typography.caption, { color: colors.textSecondary }]}>{stat.label}</Text>
               </Pressable>
