@@ -175,7 +175,7 @@ export default function TermsOfServiceScreen() {
         <Section number="10" title="Dispute Resolution" delay={275}>
           <Text style={boldStyle}>Informal Resolution</Text>
           <Text style={[bodyStyle, { marginTop: 4 }]}>
-            Before filing any formal dispute, you agree to contact us at support@priorauthbuddy.com and attempt to resolve the issue informally for at least 30 days.
+            Before filing any formal dispute, you agree to contact us at support@priorauthbuddy.app and attempt to resolve the issue informally for at least 30 days.
           </Text>
           <Text style={[boldStyle, { marginTop: 12 }]}>Arbitration</Text>
           <Text style={[bodyStyle, { marginTop: 4 }]}>
@@ -221,7 +221,7 @@ export default function TermsOfServiceScreen() {
           <Text style={bodyStyle}>Questions about these Terms? Reach out:</Text>
           <Text style={[boldStyle, { marginTop: 12 }]}>Forge Partners Inc.</Text>
           <Text style={bodyStyle}>Ontario, Canada</Text>
-          <Text style={[bodyStyle, { color: colors.primary, marginTop: 4 }]}>support@priorauthbuddy.com</Text>
+          <Text style={[bodyStyle, { color: colors.primary, marginTop: 4 }]}>support@priorauthbuddy.app</Text>
         </Section>
 
         <View style={styles.footer}>

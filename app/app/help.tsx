@@ -41,7 +41,7 @@ const FAQ_ITEMS: FAQItem[] = [
   },
   {
     question: 'How do I delete my account?',
-    answer: 'You can delete your account from the Profile tab in the app. This will permanently remove your email, preferences and all server-side data associated with your account. Since case data is stored locally on your device, you may also want to uninstall the app to remove that data. You can also email us at support@priorauthbuddy.com and we will delete your account within 30 days.',
+    answer: 'You can delete your account from the Profile tab in the app. This will permanently remove your email, preferences and all server-side data associated with your account. Since case data is stored locally on your device, you may also want to uninstall the app to remove that data. You can also email us at support@priorauthbuddy.app and we will delete your account within 30 days.',
   },
   {
     question: 'What insurers do you support?',
@@ -95,11 +95,11 @@ export default function HelpScreen() {
             Can't find what you're looking for? Our support team is here to help.
           </Text>
           <Pressable
-            onPress={() => Linking.openURL('mailto:support@priorauthbuddy.com')}
+            onPress={() => Linking.openURL('mailto:support@priorauthbuddy.app')}
             style={[styles.contactButton, { backgroundColor: colors.primary }]}
           >
             <Text style={[typography.body, { color: '#FFFFFF', fontWeight: '700', textAlign: 'center' }]}>
-              Email support@priorauthbuddy.com
+              Email support@priorauthbuddy.app
             </Text>
           </Pressable>
           <Text style={[typography.caption, { color: colors.textTertiary, marginTop: 8 }]}>

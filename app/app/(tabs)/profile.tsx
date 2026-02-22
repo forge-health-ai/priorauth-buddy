@@ -274,7 +274,7 @@ export default function ProfileScreen() {
                         await supabase.auth.signOut();
                       } catch (e) {
                         console.error('Delete account error:', e);
-                        Alert.alert('Error', 'Could not delete account. Please email support@priorauthbuddy.com for assistance.');
+                        Alert.alert('Error', 'Could not delete account. Please email support@priorauthbuddy.app for assistance.');
                       }
                     },
                   },
