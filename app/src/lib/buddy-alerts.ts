@@ -144,6 +144,8 @@ export function generateAlerts(cases: Case[]): BuddyAlert[] {
         mood: 'celebrating',
         priority: 'low',
         caseId: c.id,
+        actionRoute: `/case/${c.id}`,
+        actionLabel: 'View Case',
       });
     }
   });
