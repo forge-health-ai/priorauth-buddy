@@ -48,7 +48,8 @@ export default function CasesScreen() {
 
   // Pick up filter from navigation params
   useEffect(() => {
-    if (filter) setActiveFilter(filter);
+    if (filter === 'all') setActiveFilter(null);
+    else if (filter) setActiveFilter(filter);
   }, [filter]);
 
   const fetchCases = async () => {
@@ -130,7 +131,7 @@ export default function CasesScreen() {
       {cases.length > 0 && (
         <View style={styles.buddyRow}>
           <BuddyMascot
-            mood={cases.some(c => ['denied', 'appeal_denied'].includes(c.status)) ? 'determined' : 'thinking'}
+            mood={activeFilter === 'won' ? 'happy' : cases.some(c => ['denied', 'appeal_denied'].includes(c.status)) ? 'determined' : 'thinking'}
             size={50}
             rank={rank}
             isPro={isPro}

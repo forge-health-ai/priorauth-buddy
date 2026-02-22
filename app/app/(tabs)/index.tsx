@@ -213,6 +213,20 @@ export default function HomeScreen() {
         {buddyStats.insurersBeaten.length > 0 && (
           <Animated.View entering={FadeInDown.delay(175).springify()}>
             <BuddyWinBadges insurersBeaten={buddyStats.insurersBeaten} />
+            {(() => {
+              const wonCases = cases.filter(c => ['approved', 'appeal_won'].includes(c.status));
+              if (wonCases.length === 0) return null;
+              return (
+                <View style={{ backgroundColor: colors.surface, borderRadius: 12, padding: 12, marginTop: 8 }}>
+                  <Text style={[typography.caption, { color: colors.success, fontFamily: 'Outfit_600SemiBold', marginBottom: 6 }]}>🏆 What Worked</Text>
+                  {wonCases.slice(0, 3).map((c, i) => (
+                    <Text key={i} style={[typography.caption, { color: colors.textSecondary, marginBottom: 2 }]}>
+                      🛡️ Beat {c.insurer_name || 'insurer'} on {c.procedure_name || 'claim'} — {c.notes ? c.notes.substring(0, 60) + (c.notes.length > 60 ? '...' : '') : 'appealed and won'}
+                    </Text>
+                  ))}
+                </View>
+              );
+            })()}
           </Animated.View>
         )}
 

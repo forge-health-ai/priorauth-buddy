@@ -163,9 +163,9 @@ export default function ProfileScreen() {
           <Text style={[typography.h3, { color: colors.textSecondary, marginBottom: 12 }]}>YOUR STATS</Text>
           <View style={styles.statsGrid}>
             {[
-              { label: 'Cases Tracked', value: String(stats.cases), color: colors.primary, route: '/(tabs)/cases' as const, params: {} },
+              { label: 'Cases Tracked', value: String(stats.cases), color: colors.primary, route: '/(tabs)/cases' as const, params: { filter: 'all' } },
               { label: 'Appeals Written', value: String(stats.appeals), color: colors.accent, route: '/(tabs)/appeals' as const, params: {} },
-              { label: 'Calls Logged', value: String(stats.calls), color: colors.secondary, route: '/(tabs)/cases' as const, params: {} },
+              { label: 'Calls Logged', value: String(stats.calls), color: colors.secondary, route: '/(tabs)/scripts' as const, params: {} },
               { label: 'Wins', value: String(stats.wins), color: colors.success, route: '/(tabs)/cases' as const, params: { filter: 'won' } },
             ].map((stat, i) => (
               <Pressable key={i} onPress={() => { Haptics.selectionAsync(); router.push({ pathname: stat.route, params: stat.params }); }} style={[styles.statBox, { backgroundColor: colors.surface }]}>
